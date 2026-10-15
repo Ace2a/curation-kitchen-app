@@ -1,0 +1,383 @@
+{
+  "collections": [
+    {
+      "id": "col-1",
+      "name": "Favorites",
+      "description": "Your handpicked favorite dishes and saved culinary creations.",
+      "color": "#e11d48",
+      "recipe_ids": [],
+      "created_date": "2026-09-28T10:00:00.000Z"
+    },
+    {
+      "id": "col-2",
+      "name": "Weeknight Dinners",
+      "description": "Quick, reliable, and delicious recipes for busy evening routines.",
+      "color": "#d97706",
+      "recipe_ids": [],
+      "created_date": "2026-09-29T10:00:00.000Z"
+    },
+    {
+      "id": "col-3",
+      "name": "Custom Collections",
+      "description": "Organize your personalized menus, holiday specials, and meal prep groups.",
+      "color": "#15803d",
+      "recipe_ids": [],
+      "created_date": "2026-09-30T10:00:00.000Z"
+    }
+  ],
+  "recipes": [
+    {
+      "id": "rec-mtpersbar",
+      "title": "Classic French Omelette",
+      "category": "Breakfast",
+      "ingredients": [
+        {
+          "name": "Eggs",
+          "quantity": 3,
+          "unit": "pcs"
+        },
+        {
+          "name": "Unsalted Butter",
+          "quantity": 1,
+          "unit": "tbsp"
+        }
+      ],
+      "created_date": "2026-10-15T22:37:12.513Z"
+    }
+  ],
+  "pantry": [],
+  "meal_plans": [
+    {
+      "id": "mp-74fzs5e55",
+      "user_id": "default_user",
+      "updated_at": "2026-09-15T17:20:56.255Z",
+      "mondayBreakfast": null,
+      "mondayLunch": null,
+      "mondayDinner": null,
+      "tuesdayBreakfast": null,
+      "tuesdayLunch": null,
+      "tuesdayDinner": null,
+      "wednesdayBreakfast": null,
+      "wednesdayLunch": null,
+      "wednesdayDinner": null,
+      "thursdayBreakfast": null,
+      "thursdayLunch": null,
+      "thursdayDinner": null,
+      "fridayBreakfast": null,
+      "fridayLunch": null,
+      "fridayDinner": null,
+      "saturdayBreakfast": null,
+      "saturdayLunch": null,
+      "saturdayDinner": null,
+      "sundayBreakfast": null,
+      "sundayLunch": null,
+      "sundayDinner": null,
+      "monday_breakfast": null,
+      "monday_lunch": null,
+      "monday_dinner": null,
+      "tuesday_breakfast": null,
+      "tuesday_lunch": null,
+      "tuesday_dinner": null,
+      "wednesday_breakfast": null,
+      "wednesday_lunch": null,
+      "wednesday_dinner": null,
+      "thursday_breakfast": null,
+      "thursday_lunch": null,
+      "thursday_dinner": null,
+      "friday_breakfast": null,
+      "friday_lunch": null,
+      "friday_dinner": null,
+      "saturday_breakfast": null,
+      "saturday_lunch": null,
+      "saturday_dinner": null,
+      "sunday_breakfast": null,
+      "sunday_lunch": null,
+      "sunday_dinner": null,
+      "monday": {},
+      "tuesday": {},
+      "wednesday": {},
+      "thursday": {},
+      "friday": {},
+      "saturday": {},
+      "sunday": {}
+    }
+  ],
+  "mealplan": {
+    "id": "mp-74fzs5e55",
+    "user_id": "default_user",
+    "updated_at": "2026-09-15T17:20:56.255Z",
+    "mondayBreakfast": null,
+    "mondayLunch": null,
+    "mondayDinner": null,
+    "tuesdayBreakfast": null,
+    "tuesdayLunch": null,
+    "tuesdayDinner": null,
+    "wednesdayBreakfast": null,
+    "wednesdayLunch": null,
+    "wednesdayDinner": null,
+    "thursdayBreakfast": null,
+    "thursdayLunch": null,
+    "thursdayDinner": null,
+    "fridayBreakfast": null,
+    "fridayLunch": null,
+    "fridayDinner": null,
+    "saturdayBreakfast": null,
+    "saturdayLunch": null,
+    "saturdayDinner": null,
+    "sundayBreakfast": null,
+    "sundayLunch": null,
+    "sundayDinner": null,
+    "monday_breakfast": null,
+    "monday_lunch": null,
+    "monday_dinner": null,
+    "tuesday_breakfast": null,
+    "tuesday_lunch": null,
+    "tuesday_dinner": null,
+    "wednesday_breakfast": null,
+    "wednesday_lunch": null,
+    "wednesday_dinner": null,
+    "thursday_breakfast": null,
+    "thursday_lunch": null,
+    "thursday_dinner": null,
+    "friday_breakfast": null,
+    "friday_lunch": null,
+    "friday_dinner": null,
+    "saturday_breakfast": null,
+    "saturday_lunch": null,
+    "saturday_dinner": null,
+    "sunday_breakfast": null,
+    "sunday_lunch": null,
+    "sunday_dinner": null,
+    "monday": {},
+    "tuesday": {},
+    "wednesday": {},
+    "thursday": {},
+    "friday": {},
+    "saturday": {},
+    "sunday": {}
+  },
+  "grocery": [
+    {
+      "id": "groc-0ip699nwd",
+      "name": "Heirloom Tomatoes",
+      "category": "Produce",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:22.242Z"
+    },
+    {
+      "id": "groc-kvvl9d4q8",
+      "name": "Flour",
+      "category": "Grains & Baking",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:22.174Z"
+    },
+    {
+      "id": "groc-1dlsk6y42",
+      "name": "Ground Allspice",
+      "category": "Spices & Oils",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:22.105Z"
+    },
+    {
+      "id": "groc-is799e62i",
+      "name": "Chicken Broth",
+      "category": "Pantry Staples",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:22.029Z"
+    },
+    {
+      "id": "groc-syeoc0f6n",
+      "name": "Vegetable Oil",
+      "category": "Spices & Oils",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.963Z"
+    },
+    {
+      "id": "groc-gvjlyvf90",
+      "name": "Carrots",
+      "category": "Produce",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.890Z"
+    },
+    {
+      "id": "groc-mkwy4v1fa",
+      "name": "Russet Potatoes",
+      "category": "Produce",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.826Z"
+    },
+    {
+      "id": "groc-d1694natu",
+      "name": "Fresh Thyme",
+      "category": "Produce",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.760Z"
+    },
+    {
+      "id": "groc-mtnse7697",
+      "name": "Green Onions",
+      "category": "Produce",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.694Z"
+    },
+    {
+      "id": "groc-dpvvsrhbi",
+      "name": "Scotch Bonnet Pepper",
+      "category": "Produce",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.627Z"
+    },
+    {
+      "id": "groc-hiw6syrha",
+      "name": "Ginger",
+      "category": "Produce",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.563Z"
+    },
+    {
+      "id": "groc-986nn1ij5",
+      "name": "Garlic",
+      "category": "Spices & Oils",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.497Z"
+    },
+    {
+      "id": "groc-7m75xboqk",
+      "name": "Yellow Onion",
+      "category": "Produce",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.431Z"
+    },
+    {
+      "id": "groc-35yb6bgod",
+      "name": "Jamaican Curry Powder",
+      "category": "Spices & Oils",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.365Z"
+    },
+    {
+      "id": "groc-qdflqh43a",
+      "name": "Chicken Thighs",
+      "category": "Proteins",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.293Z"
+    },
+    {
+      "id": "groc-n2eerwr3d",
+      "name": "Spaghetti",
+      "category": "Pantry Staples",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.217Z"
+    },
+    {
+      "id": "groc-ikz287v6b",
+      "name": "Parmigiano-Reggiano Cheese",
+      "category": "Dairy & Eggs",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.152Z"
+    },
+    {
+      "id": "groc-whj27q78w",
+      "name": "Unit Cheddar Cheese",
+      "category": "Pantry Staples",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.084Z"
+    },
+    {
+      "id": "groc-q8l3oyis3",
+      "name": "Fresh Chives",
+      "category": "Pantry Staples",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:21.018Z"
+    },
+    {
+      "id": "groc-8btv3epyt",
+      "name": "Unit Heavy Cream",
+      "category": "Pantry Staples",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:20.950Z"
+    },
+    {
+      "id": "groc-bmghx95h2",
+      "name": "Black Pepper",
+      "category": "Spices & Oils",
+      "price": 0,
+      "quantity": "2 units",
+      "checked": false,
+      "store": "",
+      "created_date": "2026-10-07T21:49:20.882Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "default_user",
+      "user_id": "default_user",
+      "subscription_tier": "free",
+      "is_premium": false,
+      "stripe_customer_id": "cus_poll_test",
+      "stripe_subscription_id": "sub_poll_test",
+      "created_at": "2026-10-07T23:04:06.047Z",
+      "updated_at": "2026-10-07T23:16:05.787Z"
+    }
+  ]
+}

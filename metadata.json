@@ -1,0 +1,6 @@
+{
+  "name": "Curation Kitchen",
+  "description": "A beautiful, full-stack recipe organizer and collection manager powered by server-side Gemini AI for instant recipe importing and custom modifications.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

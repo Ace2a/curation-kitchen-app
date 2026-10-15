@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Download Curation Kitchen System Analysis</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #FAF6EE;
+      color: #2C2A29;
+    }
+    .card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 480px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      color: #D95338;
+    }
+    p {
+      font-size: 14px;
+      color: #475569;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .btn {
+      display: inline-block;
+      background: #D95338;
+      color: #FFFFFF;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 12px 24px;
+      border-radius: 10px;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #B83A22;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Curation Kitchen System Analysis</h1>
+    <p>Your comprehensive 12-page PDF analysis is ready. If your download doesn't begin automatically, click the button below:</p>
+    <a id="dl-link" href="/api/download-overview-pdf" download="Curation_Kitchen_System_Analysis.pdf" class="btn">
+      Download PDF Report
+    </a>
+  </div>
+  <script>
+    setTimeout(function() {
+      var link = document.getElementById("dl-link");
+      if (link) {
+        link.click();
+      }
+    }, 400);
+  </script>
+</body>
+</html>
