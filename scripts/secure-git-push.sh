@@ -46,8 +46,8 @@ fi
 # Sanitize target repository URL (strip leading protocol and trailing slash if present)
 CLEAN_URL=$(echo "$REPO" | sed -e 's|^https://||' -e 's|^http://||' -e 's|/*$||')
 
-# Construct authenticated URL
-AUTH_URL="https://${TOKEN}@${CLEAN_URL}"
+# Construct authenticated URL (supports both classic and fine-grained PATs)
+AUTH_URL="https://x-access-token:${TOKEN}@${CLEAN_URL}"
 
 echo "Re-linking git remote origin..."
 if git remote get-url origin >/dev/null 2>&1; then
