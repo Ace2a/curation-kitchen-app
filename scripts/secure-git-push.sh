@@ -60,6 +60,6 @@ echo "Current local branch:"
 git branch --show-current || git checkout -B main
 
 echo "Pushing local commits to remote origin (branch: main)..."
-git push -u origin main
+git push -u origin main --force
 
 echo "Deployment complete! Local main branch pushed successfully."
