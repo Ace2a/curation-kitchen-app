@@ -378,7 +378,7 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
           </div>
 
           {/* Right Action Hub: 3. "AUTOMATED GROCERY LIST" SYNC ACTION BUTTON */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full mt-2 sm:mt-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto mt-2 sm:mt-0">
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
                 onClick={handleAiAutoPlan}
@@ -395,7 +395,7 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
 
               <button
                 onClick={handleClearWeek}
-                className="p-2.5 rounded-full text-stone-400 hover:text-[#D95338] hover:bg-white border border-transparent hover:border-[#E6DFC6] transition-all cursor-pointer shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2.5 rounded-full text-stone-400 hover:text-[#D95338] hover:bg-white dark:hover:bg-zinc-800 border border-transparent hover:border-[#E6DFC6] dark:hover:border-zinc-700 transition-all cursor-pointer shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Clear weekly plan"
               >
                 <Trash2 className="w-4 h-4" />
@@ -406,7 +406,7 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
             <button
               onClick={handleGenerateSyncGroceryList}
               disabled={isSyncing}
-              className="w-full sm:w-auto flex flex-wrap text-center items-center justify-center leading-tight py-2 px-4 min-h-[44px] h-auto rounded-full bg-[#6E8B6B] hover:bg-[#536d50] text-white font-bold text-xs tracking-wide shadow-md hover:shadow-lg transition-all duration-300 gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+              className="w-full sm:w-auto flex flex-wrap text-center items-center justify-center leading-tight py-2.5 px-4 min-h-[44px] h-auto rounded-full bg-[#6E8B6B] hover:bg-[#536d50] text-white font-bold text-xs tracking-wide shadow-md hover:shadow-lg transition-all duration-300 gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
             >
               <Check className="w-4 h-4 text-white stroke-[3] shrink-0" />
               <span>{isSyncing ? "Syncing..." : "Generate & Sync Grocery List"}</span>
@@ -416,7 +416,7 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
       </header>
 
       {/* MAIN CONTAINER */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         
         {/* MOBILE DAY SELECTOR STRIP (Shown on smaller screens) */}
         <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
@@ -426,7 +426,7 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
               <button
                 key={day.key}
                 onClick={() => setSelectedDayKey(day.key)}
-                className={`px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer min-h-[44px] flex items-center justify-center ${
                   isSelected
                     ? "bg-[#6E8B6B] text-white shadow-xs"
                     : "bg-white/80 dark:bg-zinc-900 text-stone-600 dark:text-stone-300 border border-[#E6DFC6] dark:border-zinc-800"
@@ -518,20 +518,20 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
                             {/* Clear Slot Button */}
                             <button
                               onClick={() => handleUpdateSlot(dayKey, slot.key, undefined)}
-                              className="opacity-0 group-hover:opacity-100 text-stone-400 hover:text-[#D95338] p-1 rounded-full hover:bg-stone-100 dark:hover:bg-zinc-700 transition-all"
+                              className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-stone-400 hover:text-[#D95338] p-2 rounded-full hover:bg-stone-100 dark:hover:bg-zinc-700 transition-all min-h-[36px] min-w-[36px] flex items-center justify-center shrink-0 cursor-pointer"
                               title="Clear meal"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         ) : (
-                          /* Empty Slot Target */
+                          /* Empty Slot Target with min-h-[44px] touch safety */
                           <button
                             onClick={() => {
                               setEditingDay(dayKey);
                               setEditingSlot(slot.key);
                             }}
-                            className="w-full py-2.5 rounded-xl border border-dashed border-[#E6DFC6] dark:border-zinc-800 hover:border-[#6E8B6B] hover:bg-white/80 dark:hover:bg-zinc-800/50 text-[#6E8B6B]/80 hover:text-[#6E8B6B] dark:text-stone-400 font-semibold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer group"
+                            className="w-full py-2.5 px-3 min-h-[44px] rounded-xl border border-dashed border-[#E6DFC6] dark:border-zinc-800 hover:border-[#6E8B6B] hover:bg-white/80 dark:hover:bg-zinc-800/50 text-[#6E8B6B]/90 hover:text-[#6E8B6B] dark:text-stone-400 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer group shadow-2xs active:scale-98"
                           >
                             <Plus className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
                             <span>+ Schedule Recipe</span>
@@ -638,11 +638,11 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
                     placeholder="e.g., Avocado Toast, Greek Salad..."
                     value={customMealText}
                     onChange={(e) => setCustomMealText(e.target.value)}
-                    className="text-xs bg-white dark:bg-zinc-800 border-[#E6DFC6] rounded-xl"
+                    className="text-xs bg-white dark:bg-zinc-800 border-[#E6DFC6] rounded-xl h-11 min-h-[44px]"
                   />
                   <Button
                     type="submit"
-                    className="bg-[#6E8B6B] hover:bg-[#536d50] text-white text-xs font-bold rounded-xl shrink-0 cursor-pointer"
+                    className="bg-[#6E8B6B] hover:bg-[#536d50] text-white text-xs font-bold rounded-xl shrink-0 cursor-pointer h-11 min-h-[44px] px-4"
                   >
                     Assign
                   </Button>
@@ -656,13 +656,13 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
                 <label className="text-xs font-bold text-stone-600 dark:text-zinc-400">Choose from Cookbook</label>
                 
                 <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-stone-400" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400 pointer-events-none" />
                   <Input
                     type="text"
                     placeholder="Search recipes..."
                     value={recipeSearch}
                     onChange={(e) => setRecipeSearch(e.target.value)}
-                    className="pl-9 text-xs bg-white dark:bg-zinc-800 border-[#E6DFC6] rounded-xl"
+                    className="pl-10 text-xs bg-white dark:bg-zinc-800 border-[#E6DFC6] rounded-xl h-11 min-h-[44px]"
                   />
                 </div>
 
@@ -680,7 +680,7 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
                           setCustomMealText("");
                           setRecipeSearch("");
                         }}
-                        className="w-full text-left p-3 rounded-2xl bg-white dark:bg-zinc-800 border border-[#E6DFC6] dark:border-zinc-700 hover:border-[#6E8B6B] flex items-center justify-between transition-all cursor-pointer group shadow-2xs"
+                        className="w-full text-left p-3 min-h-[52px] rounded-2xl bg-white dark:bg-zinc-800 border border-[#E6DFC6] dark:border-zinc-700 hover:border-[#6E8B6B] flex items-center justify-between transition-all cursor-pointer group shadow-2xs"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           {recipe.image_url ? (

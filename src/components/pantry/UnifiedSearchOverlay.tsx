@@ -305,7 +305,7 @@ export function UnifiedSearchOverlay({
               <button
                 type="button"
                 onClick={stopCamera}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 transition-all cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[40px] rounded-xl text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 transition-all cursor-pointer shadow-xs active:scale-98"
               >
                 <CameraOff className="w-3.5 h-3.5" />
                 <span>Pause</span>
@@ -315,7 +315,7 @@ export function UnifiedSearchOverlay({
                 type="button"
                 onClick={startCamera}
                 disabled={isStartingCamera}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 min-h-[40px] rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-all cursor-pointer disabled:opacity-50 active:scale-98"
               >
                 {isStartingCamera ? (
                   <>
@@ -417,21 +417,21 @@ export function UnifiedSearchOverlay({
               if (candidates.length > 0) setIsDropdownOpen(true);
             }}
             placeholder="Can't scan? Enter barcode numbers or product name"
-            className="w-full pl-10 pr-10 py-3 rounded-2xl bg-stone-950/90 border border-stone-800 text-stone-100 placeholder-stone-500 text-xs sm:text-sm font-medium focus:outline-hidden focus:ring-2 focus:ring-amber-500/60 focus:border-amber-500/60 shadow-lg transition-all selection:bg-amber-500/30"
+            className="w-full pl-10 pr-11 py-3 min-h-[48px] rounded-2xl bg-stone-950/90 border border-stone-800 text-stone-100 placeholder-stone-500 text-xs sm:text-sm font-medium focus:outline-hidden focus:ring-2 focus:ring-amber-500/60 focus:border-amber-500/60 shadow-lg transition-all selection:bg-amber-500/30"
           />
 
           {/* Right Spinner or Clear Button */}
-          <div className="absolute right-3 flex items-center gap-1.5">
+          <div className="absolute right-1.5 flex items-center gap-1.5">
             {isSearching ? (
-              <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
+              <Loader2 className="w-4 h-4 text-amber-400 animate-spin mr-2" />
             ) : inputValue ? (
               <button
                 type="button"
                 onClick={handleClearInput}
-                className="p-1 rounded-full text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors cursor-pointer"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-stone-400 hover:text-stone-200 hover:bg-stone-800/60 transition-colors cursor-pointer"
                 aria-label="Clear search input"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             ) : null}
           </div>
@@ -502,7 +502,7 @@ export function UnifiedSearchOverlay({
                     key={`${candidate.item_name}-${idx}`}
                     type="button"
                     onClick={() => handleSelectItem(candidate)}
-                    className="w-full px-4 py-3 text-left flex items-center justify-between gap-3 hover:bg-stone-800/70 active:bg-stone-800 transition-colors group cursor-pointer"
+                    className="w-full px-4 py-3 min-h-[52px] text-left flex items-center justify-between gap-3 hover:bg-stone-800/70 active:bg-stone-800 transition-colors group cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       {/* Product icon */}

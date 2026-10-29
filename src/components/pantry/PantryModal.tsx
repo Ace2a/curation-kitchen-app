@@ -954,8 +954,9 @@ export function PantryModal({ isOpen = true, onClose, isPage = false, initialTab
         <div className="flex items-center gap-2">
           {activeTab !== "pantry" && (
             <button
+              type="button"
               onClick={() => setActiveTab("pantry")}
-              className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+              className="px-3 py-2 min-h-[44px] min-w-[44px] rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer shrink-0"
             >
               ← Back
             </button>
@@ -971,10 +972,11 @@ export function PantryModal({ isOpen = true, onClose, isPage = false, initialTab
         </div>
 
         {/* Tab Row Toggles: Compact action tabs without the redundant 'Kitchen Pantry' button */}
-        <div className="bg-zinc-100 dark:bg-zinc-950 p-1 rounded-xl flex border border-zinc-200 dark:border-zinc-800">
+        <div className="bg-zinc-100 dark:bg-zinc-950 p-1 rounded-2xl flex flex-wrap sm:flex-nowrap gap-1 border border-zinc-200 dark:border-zinc-800">
           <button
+            type="button"
             onClick={() => setActiveTab(activeTab === "grocery" ? "pantry" : "grocery")}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-4 py-2 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer flex-1 sm:flex-initial ${
               activeTab === "grocery"
                 ? "bg-amber-600 text-white shadow-sm"
                 : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
@@ -983,8 +985,9 @@ export function PantryModal({ isOpen = true, onClose, isPage = false, initialTab
             🛒 Grocery &amp; Budget
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab(activeTab === "upc" ? "pantry" : "upc")}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-4 py-2 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer flex-1 sm:flex-initial ${
               activeTab === "upc"
                 ? "bg-amber-600 text-white shadow-sm"
                 : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
@@ -2059,8 +2062,8 @@ export function PantryModal({ isOpen = true, onClose, isPage = false, initialTab
           <div className="max-w-5xl mx-auto px-4 py-3 sm:px-6 flex items-center justify-between">
             {/* Left: Home Button */}
             <Link to="/">
-              <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800 cursor-pointer">
-                <Home className="w-3.5 h-3.5 text-zinc-500" />
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-full min-h-[44px] px-3.5 text-xs font-bold uppercase tracking-wider border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800 cursor-pointer">
+                <Home className="w-3.5 h-3.5 text-[#6E8B6B]" />
                 <span>Home</span>
               </Button>
             </Link>
@@ -2125,8 +2128,9 @@ export function PantryModal({ isOpen = true, onClose, isPage = false, initialTab
           {/* Close button */}
           {onClose && (
             <button 
+              type="button"
               onClick={onClose}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
               aria-label="Close"
             >
               <X className="w-5 h-5" />

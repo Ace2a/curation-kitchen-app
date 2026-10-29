@@ -437,14 +437,14 @@ export function QuantityConfirmationModal({
               </div>
 
               {/* Quick Preset Buttons */}
-              <div className="flex items-center justify-center gap-2 pt-1 border-t border-[#E6DFC6]/50 dark:border-zinc-800">
+              <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 pt-2 border-t border-[#E6DFC6]/50 dark:border-zinc-800">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mr-1">Quick:</span>
                 {[0, 1, 2, 3, 5, 12].map((preset) => (
                   <button
                     key={preset}
                     type="button"
                     onClick={() => setQuantity(preset)}
-                    className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`min-h-[36px] min-w-[36px] px-2.5 py-1 rounded-xl text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
                       quantity === preset
                         ? "bg-[#D95338] text-white shadow-xs"
                         : "bg-[#FAF6EE] dark:bg-zinc-800 text-stone-600 dark:text-zinc-400 hover:bg-stone-200/60 dark:hover:bg-zinc-700 border border-[#E6DFC6]/60 dark:border-zinc-700"
@@ -475,7 +475,7 @@ export function QuantityConfirmationModal({
               </div>
 
               {/* Segmented Unit Selector */}
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {unitConfig.unitOptions.map((opt) => {
                   const isSelected = unit === opt;
                   return (
@@ -484,7 +484,7 @@ export function QuantityConfirmationModal({
                       type="button"
                       onClick={() => setUnit(opt)}
                       disabled={isSubmitting}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold text-center transition-all cursor-pointer border ${
+                      className={`min-h-[44px] py-2 px-3 rounded-xl text-xs font-bold text-center transition-all cursor-pointer border flex items-center justify-center ${
                         isSelected
                           ? "bg-[#6E8B6B] text-white border-[#6E8B6B] shadow-sm scale-102"
                           : "bg-white/80 dark:bg-zinc-850 text-stone-700 dark:text-zinc-300 border-[#E6DFC6] dark:border-zinc-750 hover:bg-stone-100 dark:hover:bg-zinc-800"
@@ -551,7 +551,7 @@ export function QuantityConfirmationModal({
                       setIsPremium(true);
                       setSaveFeedback("🎉 Premium unlocked! You now have unlimited pantry storage.");
                     }}
-                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-98 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-500/25 cursor-pointer transition-all"
+                    className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-98 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-500/25 cursor-pointer transition-all"
                   >
                     <Crown className="w-3.5 h-3.5 fill-white" />
                     <span>Upgrade to Premium (Unlock Unlimited)</span>
@@ -570,13 +570,13 @@ export function QuantityConfirmationModal({
             )}
 
             {/* 5. ACTION BUTTONS */}
-            <div className="pt-2 flex items-center justify-end gap-3">
+            <div className="pt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="rounded-2xl text-xs font-bold text-stone-500 hover:text-stone-800 dark:hover:text-zinc-200 px-4 py-2.5 cursor-pointer"
+                className="rounded-2xl text-xs font-bold text-stone-500 hover:text-stone-800 dark:hover:text-zinc-200 px-4 min-h-[44px] cursor-pointer"
               >
                 Cancel
               </Button>
@@ -585,7 +585,7 @@ export function QuantityConfirmationModal({
                 type="button"
                 onClick={handleCommitToPantry}
                 disabled={isSubmitting || isFreeTierCapReached}
-                className={`flex-1 rounded-2xl text-white text-xs font-extrabold py-3 px-5 transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 rounded-2xl text-white text-xs font-extrabold min-h-[44px] py-2.5 px-5 transition-all flex items-center justify-center gap-2 ${
                   isFreeTierCapReached
                     ? "bg-stone-300 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-300 dark:border-stone-700 cursor-not-allowed opacity-75 shadow-none"
                     : "bg-[#D95338] hover:bg-[#c2462e] active:scale-98 shadow-lg shadow-[#D95338]/25 cursor-pointer"

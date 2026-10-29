@@ -215,9 +215,11 @@ export function StoreComparison({ items, selectedProvince, onSelectStore, active
           Smart Store Finder
         </h3>
         <button 
+          type="button"
           onClick={handleRefreshDistances} 
-          className={`text-zinc-400 hover:text-zinc-600 transition-colors p-1 ${isRefreshing ? 'animate-spin' : ''}`}
+          className={`text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer ${isRefreshing ? 'animate-spin' : ''}`}
           title="Recalculate closest locations"
+          aria-label="Recalculate closest locations"
         >
           <RefreshCw className="w-3.5 h-3.5" />
         </button>
@@ -228,38 +230,39 @@ export function StoreComparison({ items, selectedProvince, onSelectStore, active
       </p>
 
       {/* Location selector */}
-      <div className="space-y-2 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-lg border border-zinc-150 dark:border-zinc-850">
+      <div className="space-y-2.5 bg-zinc-50 dark:bg-zinc-950 p-3 rounded-xl border border-zinc-150 dark:border-zinc-850">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black uppercase text-zinc-400">Your Shopping Location</span>
           <button
             type="button"
             onClick={handleUseGps}
             disabled={isDetectingGps}
-            className="text-[10px] font-bold text-amber-600 hover:text-amber-700 flex items-center gap-0.5 transition-colors"
+            className="min-h-[38px] px-3 py-1 rounded-lg text-xs font-bold text-amber-600 hover:text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 flex items-center gap-1 transition-all cursor-pointer select-none"
           >
-            <MapPin className="w-3 h-3" />
-            {isDetectingGps ? "Locating..." : "Use My GPS"}
+            <MapPin className="w-3.5 h-3.5" />
+            <span>{isDetectingGps ? "Locating..." : "Use My GPS"}</span>
           </button>
         </div>
 
         {gpsCoordinates ? (
-          <div className="flex items-center justify-between text-[11px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 px-2 py-1.5 rounded-md font-semibold">
-            <span className="truncate flex items-center gap-1">
-              <Sparkles className="w-3 h-3 shrink-0 text-amber-500" />
+          <div className="flex items-center justify-between text-[11px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 px-3 py-2 rounded-xl font-semibold min-h-[42px]">
+            <span className="truncate flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 shrink-0 text-amber-500" />
               GPS Active: {gpsCoordinates.lat.toFixed(4)}, {gpsCoordinates.lng.toFixed(4)}
             </span>
             <button
+              type="button"
               onClick={() => {
                 setGpsCoordinates(null);
                 setCustomPostal("");
               }}
-              className="text-[9px] underline hover:no-underline font-black"
+              className="text-[10px] underline hover:no-underline font-black px-2 py-1 min-h-[36px] flex items-center cursor-pointer"
             >
               Reset
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <select
                 value={selectedCityIndex}
@@ -267,7 +270,7 @@ export function StoreComparison({ items, selectedProvince, onSelectStore, active
                   setSelectedCityIndex(parseInt(e.target.value));
                   setCustomPostal("");
                 }}
-                className="w-full text-xs font-bold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-1.5 py-1 outline-none"
+                className="w-full min-h-[42px] text-xs font-bold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-2.5 py-2 outline-hidden focus:ring-2 focus:ring-amber-500/40"
               >
                 {CANADIAN_CITIES.map((city, idx) => (
                   <option key={city.name} value={idx}>{city.name}</option>
@@ -280,7 +283,7 @@ export function StoreComparison({ items, selectedProvince, onSelectStore, active
                 placeholder="Or Postal Code"
                 value={customPostal}
                 onChange={(e) => setCustomPostal(e.target.value.toUpperCase())}
-                className="w-full text-xs font-semibold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded px-1.5 py-1 outline-none uppercase"
+                className="w-full min-h-[42px] text-xs font-semibold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-2.5 py-2 outline-hidden uppercase focus:ring-2 focus:ring-amber-500/40"
               />
             </div>
           </div>
@@ -363,15 +366,16 @@ export function StoreComparison({ items, selectedProvince, onSelectStore, active
                 </span>
 
                 {isCurrentActive ? (
-                  <span className="text-[9px] font-black text-amber-600 uppercase tracking-tight flex items-center gap-0.5">
+                  <span className="text-[10px] font-black text-amber-600 uppercase tracking-tight flex items-center gap-1 min-h-[36px] px-2.5 py-1 rounded-lg bg-amber-500/10">
                     ● Selected Store
                   </span>
                 ) : (
                   <button
+                    type="button"
                     onClick={() => onSelectStore(comp.store.name)}
-                    className="text-[10px] font-extrabold text-amber-600 hover:text-amber-700 hover:underline flex items-center gap-0.5 cursor-pointer"
+                    className="min-h-[36px] px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 text-[10px] font-extrabold text-amber-700 dark:text-amber-400 flex items-center gap-1 cursor-pointer transition-all"
                   >
-                    Set as active filter
+                    <span>Set as active filter</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                 )}

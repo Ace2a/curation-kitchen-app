@@ -145,35 +145,38 @@ export function CategoryFilterModal({ isOpen = true, onClose, collections = [], 
 
           {/* Interactive Premium State Toggle */}
           <button
+            type="button"
             onClick={() => {
               if (isPremium) handleDowngrade();
               else handleUpgrade();
             }}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider transition-all duration-300 border cursor-pointer select-none ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-full text-xs font-bold tracking-wider transition-all duration-300 border cursor-pointer select-none ${
               isPremium 
                 ? "bg-amber-500/10 text-amber-600 border-amber-500/20" 
                 : "bg-zinc-150 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
             }`}
           >
-            <Crown className={`w-3 h-3 ${isPremium ? "fill-amber-500 stroke-amber-600" : ""}`} />
+            <Crown className={`w-3.5 h-3.5 ${isPremium ? "fill-amber-500 stroke-amber-600" : ""}`} />
             <span>{isPremium ? "PREMIUM" : "FREE TIER"}</span>
           </button>
         </div>
 
-        {/* Full-width Material 3 SearchBar */}
+        {/* Full-width SearchBar */}
         <div className="relative w-full">
-          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
+          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder={`Search recipes in ${selectedCategory.toLowerCase()}...`}
             value={textQuery}
             onChange={(e) => setTextQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-3 text-sm bg-zinc-100/70 dark:bg-zinc-850/70 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:border-red-500 font-medium text-zinc-800 dark:text-zinc-100 placeholder-zinc-400"
+            className="w-full pl-10 pr-11 py-3 min-h-[48px] text-sm bg-zinc-100/70 dark:bg-zinc-850/70 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:outline-hidden focus:ring-2 focus:ring-[#D95338] focus:border-[#D95338] font-medium text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 transition-all shadow-xs"
           />
           {textQuery && (
             <button 
+              type="button"
               onClick={() => setTextQuery("")}
-              className="absolute right-3.5 top-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+              className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+              aria-label="Clear category search"
             >
               <X className="w-4 h-4" />
             </button>
@@ -186,7 +189,7 @@ export function CategoryFilterModal({ isOpen = true, onClose, collections = [], 
         <span className="text-[10px] font-black uppercase text-zinc-400 tracking-widest block mb-1">
           Select Folder
         </span>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
           {CATEGORIES.map((cat, idx) => {
             const count = (categorizedRecipes[cat.name] || []).length;
             const isActive = selectedCategory === cat.name;
@@ -198,17 +201,18 @@ export function CategoryFilterModal({ isOpen = true, onClose, collections = [], 
             return (
               <button
                 key={cat.name}
+                type="button"
                 onClick={() => {
                   setSelectedCategory(cat.name);
                   setTextQuery("");
                 }}
-                className={`flex items-center justify-between px-4 py-4.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${gridClass} ${
+                className={`flex items-center justify-between px-3.5 sm:px-4 py-3 sm:py-3.5 min-h-[52px] rounded-2xl border text-left transition-all duration-200 cursor-pointer ${gridClass} ${
                   isActive 
-                    ? `${cat.color} ${cat.activeOutline} scale-[1.01]` 
-                    : `${cat.color} border-zinc-150 dark:border-zinc-800 hover:bg-zinc-100/40 dark:hover:bg-zinc-850/40`
+                    ? `${cat.color} ${cat.activeOutline} scale-[1.01] shadow-xs` 
+                    : `${cat.color} border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100/40 dark:hover:bg-zinc-850/40`
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3">
                   <div className={`p-2 rounded-xl bg-white dark:bg-zinc-900 shadow-xs`}>
                     <Icon className="w-4 h-4" />
                   </div>
@@ -305,7 +309,7 @@ export function CategoryFilterModal({ isOpen = true, onClose, collections = [], 
           <div className="max-w-5xl mx-auto px-4 py-3 sm:px-6 flex items-center justify-between">
             {/* Left: Home Button */}
             <Link to="/">
-              <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800 cursor-pointer">
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-full min-h-[44px] px-3.5 text-xs font-bold uppercase tracking-wider border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800 cursor-pointer">
                 <Home className="w-3.5 h-3.5 text-zinc-500" />
                 <span>Home</span>
               </Button>
@@ -362,11 +366,16 @@ export function CategoryFilterModal({ isOpen = true, onClose, collections = [], 
             className="relative z-50 w-full max-w-xl h-[85vh] bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-150 dark:border-zinc-800 overflow-y-auto flex flex-col"
           >
             {/* Header close button */}
-            <div className="absolute right-4 top-4 z-55">
+            <div className="absolute right-3.5 top-3.5 z-55">
               {onClose && (
-                <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl h-9 w-9 hover:bg-zinc-200/50 dark:hover:bg-zinc-800">
-                  <X className="w-5 h-5 text-zinc-500" />
-                </Button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  aria-label="Close category organizer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               )}
             </div>
 

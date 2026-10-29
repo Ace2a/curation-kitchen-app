@@ -13,7 +13,7 @@ import FavoritesPage from "./components/recipes/FavoritesPage";
 import OfflineIndicator from "./components/ui/OfflineIndicator";
 import { PantryModal } from "./components/pantry/PantryModal";
 import { PantryHub } from "./components/pantry/PantryHub";
-import { MealPlannerModal } from "./components/planner/MealPlannerModal";
+import { MealPlanner } from "./components/planner/MealPlanner";
 import { CategoryFilterModal } from "./components/recipes/CategoryFilterModal";
 import RecipeFormModal from "./components/recipes/RecipeFormModal";
 import LocalSearchPage from "./components/recipes/LocalSearchPage";
@@ -48,7 +48,7 @@ function UpcScannerPage() {
 
 function PlannerPage() {
   const navigate = useNavigate();
-  return <MealPlannerModal isOpen={true} onClose={() => navigate("/")} isPage={true} />;
+  return <MealPlanner isOpen={true} onClose={() => navigate("/")} isPage={true} />;
 }
 
 function CategoriesPage() {
