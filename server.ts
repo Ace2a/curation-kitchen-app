@@ -3909,6 +3909,210 @@ app.post("/api/gemini/search-recipes", async (req, res) => {
   }
 });
 
+// ============================================================================
+// AI AUTO-PLAN RECIPE ENGINE WITH PANTRY INVENTORY LOOP
+// ============================================================================
+
+function localAutoPlan(recipes: any[], pantry: any[]): { plan: any; expiringIngredientsUsed: string[]; rationale: string } {
+  const now = Date.now();
+  const expiringItems = (pantry || []).filter((item: any) => {
+    if (!item) return false;
+    if (item.freshness_warning || item.is_nearing_use_by) return true;
+    if (item.use_by_date) {
+      const diffDays = (new Date(item.use_by_date).getTime() - now) / (1000 * 60 * 60 * 24);
+      return diffDays <= 5;
+    }
+    return item.status === "Running Low";
+  });
+
+  const expiringNames: string[] = expiringItems.map((p: any) => p.item_name || p.name).filter(Boolean);
+
+  // Score recipes by how many expiring items they match
+  const scored = recipes.map((r: any) => {
+    const rIngredients = (r.ingredients || []).map((i: any) =>
+      typeof i === "string" ? i.toLowerCase() : (i.name || "").toLowerCase()
+    );
+    let score = 0;
+    for (const exp of expiringNames) {
+      const expLower = exp.toLowerCase();
+      if (rIngredients.some((ing: string) => ing.includes(expLower) || expLower.includes(ing))) {
+        score += 2;
+      }
+    }
+    return { recipe: r, score };
+  }).sort((a, b) => b.score - a.score);
+
+  const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+  const plan: Record<string, any> = {};
+
+  let idx = 0;
+  for (const day of days) {
+    plan[day] = {
+      breakfast: scored[(idx++) % scored.length]?.recipe?.id || "",
+      lunch: scored[(idx++) % scored.length]?.recipe?.id || "",
+      dinner: scored[(idx++) % scored.length]?.recipe?.id || "",
+    };
+  }
+
+  return {
+    plan,
+    expiringIngredientsUsed: expiringNames.slice(0, 5),
+    rationale: expiringNames.length > 0 
+      ? `Prioritized early week recipes featuring ${expiringNames.slice(0, 3).join(", ")} which are nearing expiration.`
+      : "Balanced weekly meal plan across all your cookbook recipes."
+  };
+}
+
+app.post("/api/gemini/auto-plan", async (req, res) => {
+  const { recipes = [], pantry = [] } = req.body;
+  if (!recipes || !Array.isArray(recipes) || recipes.length === 0) {
+    return res.status(400).json({ error: "At least one recipe is required to generate a plan." });
+  }
+
+  if (!process.env.GEMINI_API_KEY) {
+    const localResult = localAutoPlan(recipes, pantry);
+    return res.json(localResult);
+  }
+
+  try {
+    const compactRecipes = recipes.map((r: any) => ({
+      id: r.id,
+      title: r.title,
+      ingredients: (r.ingredients || []).map((i: any) => (typeof i === "string" ? i : i.name)).slice(0, 15),
+      tags: r.tags || [],
+      meal_heading: r.meal_heading || ""
+    }));
+
+    const compactPantry = (pantry || []).map((p: any) => ({
+      name: p.item_name || p.name,
+      quantity: p.quantity,
+      unit: p.unit,
+      status: p.status,
+      use_by_date: p.use_by_date,
+      days_until_use_by: p.days_until_use_by,
+      is_expiring: Boolean(p.freshness_warning || p.is_nearing_use_by || (p.days_until_use_by !== undefined && p.days_until_use_by <= 5))
+    }));
+
+    const prompt = `You are an expert executive chef and household meal planner.
+Generate a cohesive 7-day weekly meal plan (Monday through Sunday) with breakfast, lunch, and dinner.
+
+CRITICAL OBJECTIVE: Read the user's real-time pantry inventory and prioritize using expiring pantry ingredients FIRST (early in the week like Monday and Tuesday) to prevent food waste.
+
+Available Recipes:
+${JSON.stringify(compactRecipes, null, 2)}
+
+Current Pantry Stock (with expiration status):
+${JSON.stringify(compactPantry, null, 2)}
+
+Rules:
+1. ONLY assign recipe IDs from the Available Recipes list to the slots. Do not invent fake IDs.
+2. If certain ingredients are marked as expiring, prioritize recipes that use those ingredients in the first few days.
+3. Fill all 7 days (monday, tuesday, wednesday, thursday, friday, saturday, sunday) with breakfast, lunch, and dinner.
+4. Provide a brief rationale explaining how the plan minimizes food waste based on their actual pantry items.`;
+
+    const response = await ai.models.generateContent({
+      model: ACTIVE_FLASH_MODEL,
+      contents: prompt,
+      config: {
+        systemInstruction: "You are an intelligent kitchen assistant that creates weekly meal plans prioritizing ingredients expiring soonest in the user's pantry.",
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          required: ["plan", "expiringIngredientsUsed", "rationale"],
+          properties: {
+            plan: {
+              type: Type.OBJECT,
+              required: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+              properties: {
+                monday: {
+                  type: Type.OBJECT,
+                  required: ["breakfast", "lunch", "dinner"],
+                  properties: {
+                    breakfast: { type: Type.STRING },
+                    lunch: { type: Type.STRING },
+                    dinner: { type: Type.STRING }
+                  }
+                },
+                tuesday: {
+                  type: Type.OBJECT,
+                  required: ["breakfast", "lunch", "dinner"],
+                  properties: {
+                    breakfast: { type: Type.STRING },
+                    lunch: { type: Type.STRING },
+                    dinner: { type: Type.STRING }
+                  }
+                },
+                wednesday: {
+                  type: Type.OBJECT,
+                  required: ["breakfast", "lunch", "dinner"],
+                  properties: {
+                    breakfast: { type: Type.STRING },
+                    lunch: { type: Type.STRING },
+                    dinner: { type: Type.STRING }
+                  }
+                },
+                thursday: {
+                  type: Type.OBJECT,
+                  required: ["breakfast", "lunch", "dinner"],
+                  properties: {
+                    breakfast: { type: Type.STRING },
+                    lunch: { type: Type.STRING },
+                    dinner: { type: Type.STRING }
+                  }
+                },
+                friday: {
+                  type: Type.OBJECT,
+                  required: ["breakfast", "lunch", "dinner"],
+                  properties: {
+                    breakfast: { type: Type.STRING },
+                    lunch: { type: Type.STRING },
+                    dinner: { type: Type.STRING }
+                  }
+                },
+                saturday: {
+                  type: Type.OBJECT,
+                  required: ["breakfast", "lunch", "dinner"],
+                  properties: {
+                    breakfast: { type: Type.STRING },
+                    lunch: { type: Type.STRING },
+                    dinner: { type: Type.STRING }
+                  }
+                },
+                sunday: {
+                  type: Type.OBJECT,
+                  required: ["breakfast", "lunch", "dinner"],
+                  properties: {
+                    breakfast: { type: Type.STRING },
+                    lunch: { type: Type.STRING },
+                    dinner: { type: Type.STRING }
+                  }
+                }
+              }
+            },
+            expiringIngredientsUsed: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "Pantry ingredients nearing expiration that were successfully incorporated into the plan."
+            },
+            rationale: {
+              type: Type.STRING,
+              description: "Clear explanation of how the plan optimizes pantry ingredients and avoids spoilage."
+            }
+          }
+        }
+      }
+    });
+
+    const resultText = response.text?.trim() || "{}";
+    const parsed = JSON.parse(resultText);
+    res.json(parsed);
+  } catch (err: any) {
+    console.warn("Gemini auto-plan error, falling back to algorithmic plan:", err?.message || err);
+    const fallback = localAutoPlan(recipes, pantry);
+    res.json(fallback);
+  }
+});
+
 /**
  * Centralized Health Monitoring Check Controller for Google Cloud Run
  * GET /api/health (and /health)

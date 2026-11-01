@@ -6,7 +6,8 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { recipeClient } from "../../api/recipeClient";
-import { MealPlan, Recipe, GroceryItem } from "../../types";
+import { MealPlan, Recipe, GroceryItem, PantryItem } from "../../types";
+import { isPantryItemVisible } from "../../services/pantryService";
 import { 
   X, Calendar, Plus, Trash2, Sparkles, Search, Check, 
   RefreshCw, ChevronRight, Home, Lock, Star, Sparkle, Coffee,
@@ -86,6 +87,14 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
 
   // AI Planner generation states
   const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [aiFeedback, setAiFeedback] = useState<{ rationale: string; expiringIngredients: string[] } | null>(null);
+
+  // Fetch real-time pantry inventory for AI Auto-Plan loop
+  const { data: pantryItems = [] } = useQuery<PantryItem[]>({
+    queryKey: ["pantry"],
+    queryFn: () => recipeClient.pantry.list(),
+    enabled: isOpen,
+  });
 
   // Fetch recipe list
   const { data: recipes = [] } = useQuery<Recipe[]>({
@@ -281,7 +290,7 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
     }
   };
 
-  // AI Auto-Plan Week
+  // AI Auto-Plan Week with Real-Time Pantry Inventory Loop
   const handleAiAutoPlan = async () => {
     if (recipes.length === 0) {
       alert("Please add some recipes to your cookbook first so the AI can generate a weekly plan!");
@@ -289,46 +298,38 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
     }
 
     setIsAiGenerating(true);
+    setAiFeedback(null);
 
     try {
-      const recipeInfo = recipes.map(r => ({ id: r.id, title: r.title }));
-      const prompt = `Generate a meal plan JSON using only these recipe IDs: ${JSON.stringify(recipeInfo)}.
-      Return it inside the "description" field of your response as a raw JSON string. Do not use Markdown formatting inside the description string.
-      The structure in description MUST be:
-      {"monday":{"breakfast":"rec-id","lunch":"...","dinner":"..."}, "tuesday":...}`;
+      const activePantry = pantryItems.filter(isPantryItemVisible);
+      const result = await recipeClient.mealPlan.autoPlan(recipes, activePantry);
 
-      const aiResponse = await fetch("/api/gemini/modify-recipe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          recipe: { title: "Meal Planner Tracker", description: "", prep_time: "5m", cook_time: "5m", servings: 1, ingredients: [], instructions: [], tags: [] },
-          instruction: prompt,
-        })
-      });
+      if (result && result.plan) {
+        const validatedPlan: MealPlan = {
+          monday: {}, tuesday: {}, wednesday: {}, thursday: {}, friday: {}, saturday: {}, sunday: {}
+        };
+        DAYS_OF_WEEK.forEach(({ key }) => {
+          if (result.plan[key]) {
+            validatedPlan[key] = {
+              breakfast: result.plan[key].breakfast || "",
+              lunch: result.plan[key].lunch || "",
+              dinner: result.plan[key].dinner || ""
+            };
+          }
+        });
+        saveMutation.mutate(validatedPlan);
 
-      if (aiResponse.ok) {
-        const data = await aiResponse.json();
-        if (data && data.description) {
-          const parsedPlan = JSON.parse(data.description);
-          const validatedPlan: MealPlan = {
-            monday: {}, tuesday: {}, wednesday: {}, thursday: {}, friday: {}, saturday: {}, sunday: {}
-          };
-          DAYS_OF_WEEK.forEach(({ key }) => {
-            if (parsedPlan[key]) {
-              validatedPlan[key] = {
-                breakfast: parsedPlan[key].breakfast || "",
-                lunch: parsedPlan[key].lunch || "",
-                dinner: parsedPlan[key].dinner || ""
-              };
-            }
+        if (result.rationale) {
+          setAiFeedback({
+            rationale: result.rationale,
+            expiringIngredients: result.expiringIngredientsUsed || [],
           });
-          saveMutation.mutate(validatedPlan);
-          setIsAiGenerating(false);
-          return;
         }
+        setIsAiGenerating(false);
+        return;
       }
     } catch (e) {
-      console.warn("AI generation fallback to randomized allocation:", e);
+      console.warn("AI Auto-Plan error, falling back to algorithmic plan:", e);
     }
 
     // Fallback randomized plan using user recipes
@@ -342,6 +343,10 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
       fallbackPlan[key] = { breakfast: randB, lunch: randL, dinner: randD };
     });
     saveMutation.mutate(fallbackPlan);
+    setAiFeedback({
+      rationale: "Generated a balanced weekly plan across your saved cookbook recipes.",
+      expiringIngredients: [],
+    });
     setIsAiGenerating(false);
   };
 
@@ -417,6 +422,44 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
 
       {/* MAIN CONTAINER */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* AI AUTO-PLAN RATIONALE & EXPOSING BANNER */}
+        <AnimatePresence>
+          {aiFeedback && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="p-4 rounded-2xl bg-[#6E8B6B]/15 border border-[#6E8B6B]/30 text-zinc-900 dark:text-zinc-100 text-xs flex items-start justify-between gap-3 shadow-xs"
+            >
+              <div className="flex items-start gap-2.5 min-w-0">
+                <Sparkles className="w-4 h-4 text-[#6E8B6B] shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-extrabold text-[11px] uppercase tracking-wider text-[#6E8B6B]">
+                      AI Auto-Plan Generated
+                    </span>
+                    {aiFeedback.expiringIngredients.length > 0 && (
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                        {aiFeedback.expiringIngredients.length} Expiring Items Prioritized
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-stone-700 dark:text-stone-300 leading-relaxed">
+                    {aiFeedback.rationale}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAiFeedback(null)}
+                className="p-1 rounded-lg text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center shrink-0"
+                aria-label="Dismiss AI plan note"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         {/* MOBILE DAY SELECTOR STRIP (Shown on smaller screens) */}
         <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-2 no-scrollbar">

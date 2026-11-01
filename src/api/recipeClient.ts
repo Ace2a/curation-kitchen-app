@@ -380,6 +380,20 @@ export const recipeClient = {
       // Keep cache fresh
       offlineStore.setCache("mealplan", result);
       return result;
+    },
+    autoPlan: async (
+      recipes: Recipe[],
+      pantry: PantryItem[]
+    ): Promise<{ plan: MealPlan; rationale?: string; expiringIngredientsUsed?: string[] }> => {
+      const res = await fetch("/api/gemini/auto-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipes, pantry }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to auto-plan meals with pantry inventory.");
+      }
+      return await res.json();
     }
   },
   grocery: {
