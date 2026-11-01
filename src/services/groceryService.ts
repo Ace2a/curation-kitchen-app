@@ -525,6 +525,23 @@ export function calculateGroceryDeficit(
   };
 }
 
+/**
+ * Convenient wrapper accepting either (mealPlan, recipes, pantryItems)
+ * or (scheduledMeals, pantryItems).
+ */
+export function calculateWeeklyDeficitGap(
+  mealPlanOrMeals: MealPlan | ScheduledMealRef[],
+  recipesOrPantry: Recipe[] | PantryItem[],
+  pantryItemsOptional?: PantryItem[]
+): DeficitGapAnalysis {
+  if (Array.isArray(mealPlanOrMeals)) {
+    return calculateGroceryDeficit(mealPlanOrMeals, recipesOrPantry as PantryItem[]);
+  }
+  const scheduled = getScheduledMealsFromPlan(mealPlanOrMeals, recipesOrPantry as Recipe[]);
+  return calculateGroceryDeficit(scheduled, pantryItemsOptional || []);
+}
+
+
 // ============================================================================
 // SYNC PIPELINE: APPEND DEFICIT ITEMS TO LOCAL GROCERY LIST DATABASE
 // ============================================================================

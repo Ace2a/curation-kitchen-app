@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { recipeClient } from "../../api/recipeClient";
 import { MealPlan, Recipe, GroceryItem, PantryItem } from "../../types";
@@ -94,6 +94,20 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
   const [isSyncing, setIsSyncing] = useState(false);
   const [deficitAnalysis, setDeficitAnalysis] = useState<DeficitGapAnalysis | null>(null);
   const [checkedDeficitItemIds, setCheckedDeficitItemIds] = useState<Record<string, boolean>>({});
+  const [syncCategoryFilter, setSyncCategoryFilter] = useState<string>("All");
+
+  // Memoized categories and filtered items for Sage Green List Inspector
+  const syncAvailableCategories = useMemo(() => {
+    if (!deficitAnalysis || deficitAnalysis.deficitItems.length === 0) return ["All"];
+    const cats = Array.from(new Set(deficitAnalysis.deficitItems.map((item) => item.category))).filter(Boolean);
+    return ["All", ...cats.sort()];
+  }, [deficitAnalysis]);
+
+  const filteredDeficitItems = useMemo(() => {
+    if (!deficitAnalysis) return [];
+    if (syncCategoryFilter === "All") return deficitAnalysis.deficitItems;
+    return deficitAnalysis.deficitItems.filter((item) => item.category === syncCategoryFilter);
+  }, [deficitAnalysis, syncCategoryFilter]);
 
   // AI Planner generation states
   const [isAiGenerating, setIsAiGenerating] = useState(false);
@@ -265,6 +279,7 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
 
       // Reset local check states for newly calculated deficit items
       setCheckedDeficitItemIds({});
+      setSyncCategoryFilter("All");
       setIsSyncModalOpen(true);
     } catch (err) {
       console.error("Failed calculating and syncing grocery deficit gap:", err);
@@ -587,129 +602,167 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
       {/* SYNC GROCERY SUCCESS MODAL (SAGE GREEN LIST) */}
       <AnimatePresence>
         {isSyncModalOpen && (
-          <div className="fixed inset-0 z-50 bg-stone-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-x-hidden w-full max-w-full">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#FAF6EE] dark:bg-zinc-900 border border-[#E6DFC6] dark:border-zinc-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col text-left"
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.2 }}
+              className="bg-emerald-50/10 backdrop-blur-md border border-emerald-500/20 bg-white/95 dark:bg-zinc-900/95 rounded-3xl p-5 sm:p-6 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col text-left overflow-x-hidden max-w-full"
             >
-              {/* Header */}
-              <div className="flex items-start justify-between gap-3 border-b border-[#E6DFC6] dark:border-zinc-800 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-[#6E8B6B]/15 text-[#6E8B6B] flex items-center justify-center shrink-0">
+              {/* Header with High-Contrast Typography & 44px Touch Target Close Button */}
+              <div className="flex items-start justify-between gap-3 border-b border-emerald-500/20 pb-4 w-full max-w-full">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50/10 backdrop-blur-md border border-emerald-500/20 text-[#6E8B6B] dark:text-emerald-400 flex items-center justify-center shrink-0">
                     <CheckCircle2 className="w-7 h-7 stroke-[2.5]" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-serif font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                  <div className="min-w-0">
+                    <h3 className="text-lg sm:text-xl font-serif font-bold text-neutral-900 dark:text-white flex items-center gap-2 flex-wrap">
                       <span>Grocery Deficit Synced</span>
-                      <span className="text-[10px] font-sans font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#6E8B6B]/20 text-[#4c6749]">
+                      <span className="text-[10px] font-sans font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
                         Sage Green List
                       </span>
                     </h3>
-                    <p className="text-xs text-stone-500 dark:text-zinc-400">
-                      Evaluated against real-time pantry inventory & depleted stock.
+                    <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                      Evaluated against real-time pantry inventory &amp; depleted stock.
                     </p>
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsSyncModalOpen(false)}
-                  className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 p-1 rounded-full cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-emerald-500/10 transition-colors cursor-pointer shrink-0"
+                  aria-label="Close sync modal"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Deficit Metric Highlights */}
-              <div className="grid grid-cols-3 gap-2 py-1">
-                <div className="p-2.5 rounded-2xl bg-white dark:bg-zinc-800/80 border border-[#E6DFC6] dark:border-zinc-700 text-center">
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-stone-400 block">Required</span>
-                  <span className="text-base font-bold text-zinc-900 dark:text-white">
+              {/* Deficit Metric Highlights with Glassmorphic Card Accents */}
+              <div className="grid grid-cols-3 gap-2 py-1 w-full max-w-full">
+                <div className="p-2.5 rounded-2xl bg-emerald-50/10 backdrop-blur-md border border-emerald-500/20 text-center">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-neutral-500 dark:text-neutral-400 block">Required</span>
+                  <span className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white">
                     {deficitAnalysis?.uniqueIngredientsCount || 0}
                   </span>
-                  <span className="text-[9px] text-stone-400 block">ingredients</span>
+                  <span className="text-[9px] text-neutral-500 dark:text-neutral-400 block">ingredients</span>
                 </div>
-                <div className="p-2.5 rounded-2xl bg-[#6E8B6B]/10 border border-[#6E8B6B]/25 text-center">
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-[#6E8B6B] block">In Pantry</span>
-                  <span className="text-base font-bold text-[#6E8B6B]">
+                <div className="p-2.5 rounded-2xl bg-[#6E8B6B]/15 dark:bg-emerald-950/40 backdrop-blur-md border border-emerald-500/25 text-center">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[#6E8B6B] dark:text-emerald-400 block">In Pantry</span>
+                  <span className="text-base sm:text-lg font-bold text-[#6E8B6B] dark:text-emerald-400">
                     {deficitAnalysis?.coveredItemsCount || 0}
                   </span>
-                  <span className="text-[9px] text-[#6E8B6B]/80 block">covered</span>
+                  <span className="text-[9px] text-[#6E8B6B]/80 dark:text-emerald-400/80 block">covered</span>
                 </div>
-                <div className="p-2.5 rounded-2xl bg-[#D95338]/10 border border-[#D95338]/25 text-center">
+                <div className="p-2.5 rounded-2xl bg-[#D95338]/10 backdrop-blur-md border border-[#D95338]/25 text-center">
                   <span className="text-[10px] uppercase tracking-wider font-bold text-[#D95338] block">Deficit Gap</span>
-                  <span className="text-base font-bold text-[#D95338]">
+                  <span className="text-base sm:text-lg font-bold text-[#D95338]">
                     {deficitAnalysis?.deficitItemsCount || 0}
                   </span>
                   <span className="text-[9px] text-[#D95338]/80 block">to buy</span>
                 </div>
               </div>
 
+              {/* Filtering Triggers with Strict Accessible Touch Targets (min-h-[44px] min-w-[44px]) */}
+              {syncAvailableCategories.length > 2 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar w-full max-w-full">
+                  {syncAvailableCategories.map((cat) => {
+                    const isActive = syncCategoryFilter === cat;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setSyncCategoryFilter(cat)}
+                        className={`min-h-[44px] min-w-[44px] px-3.5 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all flex items-center justify-center shrink-0 ${
+                          isActive
+                            ? "bg-[#6E8B6B] text-white shadow-xs font-bold"
+                            : "bg-emerald-50/10 backdrop-blur-md border border-emerald-500/20 text-neutral-800 dark:text-neutral-200 hover:bg-emerald-50/30"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* List of deficit items or 100% covered state */}
-              <div className="flex-grow overflow-y-auto pr-1 space-y-2 min-h-0 max-h-[320px]">
+              <div className="flex-grow overflow-y-auto overflow-x-hidden pr-1 space-y-2 min-h-0 max-h-[320px] w-full max-w-full">
                 {(!deficitAnalysis || deficitAnalysis.deficitItems.length === 0) ? (
-                  <div className="text-center py-8 px-4 rounded-2xl bg-white dark:bg-zinc-800 border border-[#E6DFC6] space-y-2">
+                  <div className="text-center py-8 px-4 rounded-2xl bg-emerald-50/10 backdrop-blur-md border border-emerald-500/20 space-y-2">
                     <span className="text-3xl">🎉</span>
-                    <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                    <h4 className="text-sm font-bold text-neutral-900 dark:text-white">
                       Kitchen Fully Stocked!
                     </h4>
-                    <p className="text-xs text-stone-500 max-w-xs mx-auto leading-relaxed">
+                    <p className="text-xs text-neutral-600 dark:text-neutral-300 max-w-xs mx-auto leading-relaxed">
                       All required ingredients for your planned 7-day meals are already available in your pantry inventory.
                     </p>
                   </div>
+                ) : filteredDeficitItems.length === 0 ? (
+                  <div className="text-center py-6 px-4 rounded-2xl bg-emerald-50/10 backdrop-blur-md border border-emerald-500/20 space-y-1">
+                    <p className="text-xs text-neutral-600 dark:text-neutral-300">
+                      No deficit items in category <strong>{syncCategoryFilter}</strong>.
+                    </p>
+                  </div>
                 ) : (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-semibold text-stone-500 px-1">
-                      <span>Items Added to Grocery List ({deficitAnalysis.deficitItems.length})</span>
-                      <span className="text-[10px] text-stone-400">Click item to check off</span>
+                  <div className="space-y-1.5 w-full max-w-full">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 px-1">
+                      <span>Items Added to Grocery List ({filteredDeficitItems.length})</span>
+                      <span className="text-[10px] text-neutral-400 dark:text-neutral-400">Click item to check off</span>
                     </div>
 
-                    {deficitAnalysis.deficitItems.map((item) => {
+                    {filteredDeficitItems.map((item) => {
                       const isChecked = !!checkedDeficitItemIds[item.id];
                       return (
                         <div
                           key={item.id}
                           onClick={() => {
-                            setCheckedDeficitItemIds(prev => ({ ...prev, [item.id]: !prev[item.id] }));
+                            setCheckedDeficitItemIds((prev) => ({ ...prev, [item.id]: !prev[item.id] }));
                           }}
-                          className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 select-none ${
+                          className={`p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 select-none w-full max-w-full overflow-hidden ${
                             isChecked
-                              ? "bg-stone-100/70 dark:bg-zinc-800/40 border-stone-200 dark:border-zinc-800 opacity-60"
-                              : "bg-white dark:bg-zinc-800 border-[#E6DFC6] dark:border-zinc-700/80 hover:border-[#6E8B6B] shadow-2xs"
+                              ? "bg-neutral-100/70 dark:bg-zinc-800/40 border-neutral-200 dark:border-zinc-800 opacity-60"
+                              : "bg-emerald-50/10 backdrop-blur-md border border-emerald-500/20 hover:border-emerald-500/40 shadow-2xs"
                           }`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
+                            {/* Strict 44px Touch Target for Interactive Checkboxes */}
                             <button
                               type="button"
-                              className="text-stone-400 hover:text-[#6E8B6B] shrink-0"
+                              className="min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0 rounded-xl cursor-pointer text-neutral-500 hover:text-[#6E8B6B] dark:text-neutral-400"
+                              aria-label={isChecked ? `Uncheck ${item.name}` : `Check ${item.name}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCheckedDeficitItemIds((prev) => ({ ...prev, [item.id]: !prev[item.id] }));
+                              }}
                             >
                               {isChecked ? (
-                                <CheckSquare className="w-4 h-4 text-[#6E8B6B]" />
+                                <CheckSquare className="w-5 h-5 text-[#6E8B6B] dark:text-emerald-400" />
                               ) : (
-                                <Square className="w-4 h-4 text-stone-400" />
+                                <Square className="w-5 h-5 text-neutral-400 dark:text-neutral-500" />
                               )}
                             </button>
 
                             <div className="min-w-0 space-y-0.5">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className={`text-xs font-bold capitalize truncate ${
-                                  isChecked ? "line-through text-stone-400" : "text-zinc-900 dark:text-zinc-100"
+                                <span className={`text-xs sm:text-sm font-bold capitalize truncate ${
+                                  isChecked ? "line-through text-neutral-400" : "text-neutral-900 dark:text-white"
                                 }`}>
                                   {item.name}
                                 </span>
-                                <span className="text-[9px] font-medium px-2 py-0.2 rounded-full bg-stone-100 dark:bg-zinc-700 text-stone-600 dark:text-stone-300">
+                                <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 border border-emerald-500/30">
                                   {item.category}
                                 </span>
                               </div>
 
-                              <p className="text-[10px] text-stone-500 dark:text-zinc-400">
-                                Need {item.formattedRequiredQuantity} • In Pantry: <strong className="text-stone-600 dark:text-stone-300">{item.formattedPantryQuantity}</strong>
+                              <p className="text-[10px] sm:text-[11px] text-neutral-600 dark:text-neutral-300">
+                                Need {item.formattedRequiredQuantity} • In Pantry: <strong className="text-neutral-800 dark:text-neutral-200">{item.formattedPantryQuantity}</strong>
                               </p>
                             </div>
                           </div>
 
                           <div className="text-right shrink-0">
-                            <span className="text-xs font-bold text-[#D95338] bg-[#D95338]/10 px-2.5 py-1 rounded-full whitespace-nowrap">
+                            <span className="text-xs font-bold text-[#D95338] bg-[#D95338]/10 border border-[#D95338]/20 px-2.5 py-1 rounded-full whitespace-nowrap">
                               +{item.formattedDeficitQuantity}
                             </span>
                           </div>
@@ -720,21 +773,23 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
                 )}
               </div>
 
-              {/* Action buttons (STRICT CONSTRAINT: strictly in-app navigation, no affiliate links) */}
-              <div className="pt-2 border-t border-[#E6DFC6] dark:border-zinc-800 flex items-center justify-between gap-3">
+              {/* Action buttons with 44px Accessible Touch Targets (STRICT CONSTRAINT: in-app navigation only) */}
+              <div className="pt-2 border-t border-emerald-500/20 flex items-center justify-between gap-3 w-full max-w-full">
                 <Button
+                  type="button"
                   onClick={() => setIsSyncModalOpen(false)}
                   variant="outline"
-                  className="rounded-full border-[#E6DFC6] text-xs font-medium cursor-pointer h-11 px-5"
+                  className="rounded-full border-emerald-500/30 text-xs font-medium cursor-pointer min-h-[44px] min-w-[44px] px-5 text-neutral-800 dark:text-neutral-200 hover:bg-emerald-50/20"
                 >
                   Stay on Planner
                 </Button>
                 <Button
+                  type="button"
                   onClick={() => {
                     setIsSyncModalOpen(false);
                     navigate("/pantry");
                   }}
-                  className="rounded-full bg-[#6E8B6B] hover:bg-[#536d50] text-white text-xs font-bold gap-2 cursor-pointer h-11 px-5 shadow-sm"
+                  className="rounded-full bg-[#6E8B6B] hover:bg-[#536d50] text-white text-xs font-bold gap-2 cursor-pointer min-h-[44px] min-w-[44px] px-5 shadow-sm"
                 >
                   <ShoppingBag className="w-4 h-4" />
                   <span>View Grocery List</span>
