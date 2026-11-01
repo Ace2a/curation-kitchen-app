@@ -9,7 +9,8 @@ import { Html5Qrcode } from "html5-qrcode";
 import { 
   Camera, CameraOff, Search, Loader2, X, Barcode, 
   Package, Sparkles, Scale, RefreshCw, AlertCircle, 
-  ChevronRight, ArrowRight, CornerDownLeft, ShieldCheck
+  ChevronRight, ArrowRight, CornerDownLeft, ShieldCheck,
+  WifiOff, Lightbulb
 } from "lucide-react";
 import { unifiedPantrySearch, UnifiedSearchResult } from "../../services/pantryService";
 import { 
@@ -70,12 +71,54 @@ export function UnifiedSearchOverlay({
   const [activeItem, setActiveItem] = useState<ResolvedPantryItem | null>(null);
   const [isQuantityModalOpen, setIsQuantityModalOpen] = useState(false);
 
-  // Camera State
+  // Camera & Resilience State
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isStartingCamera, setIsStartingCamera] = useState(false);
+  const [showWatchdogTip, setShowWatchdogTip] = useState(false);
   const html5ScannerRef = useRef<Html5Qrcode | null>(null);
   const cameraContainerId = "unified-scanner-viewport";
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Online / Offline State
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // Watchdog timer: if scanning for >= 8 seconds without decode, show helpful tip & quick manual option
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (isCameraActive) {
+      setShowWatchdogTip(false);
+      timer = setTimeout(() => {
+        setShowWatchdogTip(true);
+      }, 8000);
+    } else {
+      setShowWatchdogTip(false);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isCameraActive]);
+
+  // Focus manual input helper
+  const focusManualEntry = () => {
+    stopCamera();
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 120);
+  };
 
   // Ref to track latest input to prevent stale barcode auto-triggers
   const latestQueryRef = useRef("");
@@ -146,11 +189,12 @@ export function UnifiedSearchOverlay({
   }, [debouncedQuery]);
 
   // --------------------------------------------------------------------------
-  // 3. CAMERA SCANNER LIFECYCLE
+  // 3. CAMERA SCANNER LIFECYCLE & RESILIENCE
   // --------------------------------------------------------------------------
   const startCamera = async () => {
     setCameraError(null);
     setIsStartingCamera(true);
+    setShowWatchdogTip(false);
 
     try {
       // Small tick to ensure container exists in DOM
@@ -175,39 +219,58 @@ export function UnifiedSearchOverlay({
       const scanner = new Html5Qrcode(cameraContainerId);
       html5ScannerRef.current = scanner;
 
-      await scanner.start(
-        { facingMode: "environment" },
-        {
-          fps: 12,
-          qrbox: (viewfinderWidth, viewfinderHeight) => {
-            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-            const boxWidth = Math.min(viewfinderWidth * 0.85, 300);
-            const boxHeight = Math.min(minEdge * 0.48, 150);
-            return { width: boxWidth, height: boxHeight };
-          },
-        },
-        async (decodedText) => {
-          playScannerBeep();
-          await stopCamera();
+      const onScanSuccess = async (decodedText: string) => {
+        playScannerBeep();
+        await stopCamera();
 
-          setInputValue(decodedText);
-          setIsSearching(true);
+        setInputValue(decodedText);
+        setIsSearching(true);
 
-          try {
-            const results = await unifiedPantrySearch(decodedText);
-            setIsSearching(false);
-            if (results && results.length > 0) {
-              handleSelectItem(results[0]);
-            }
-          } catch (lookupErr: any) {
-            setIsSearching(false);
-            setSearchError(`Scanned barcode "${decodedText}", but resolution failed.`);
+        try {
+          const results = await unifiedPantrySearch(decodedText);
+          setIsSearching(false);
+          if (results && results.length > 0) {
+            handleSelectItem(results[0]);
           }
-        },
-        () => {
-          // Frame error hook during live scanning
+        } catch (lookupErr: any) {
+          setIsSearching(false);
+          setSearchError(`Scanned barcode "${decodedText}", but resolution failed.`);
         }
-      );
+      };
+
+      const qrConfig = {
+        fps: 12,
+        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+          const boxWidth = Math.min(viewfinderWidth * 0.85, 300);
+          const boxHeight = Math.min(minEdge * 0.48, 150);
+          return { width: boxWidth, height: boxHeight };
+        },
+      };
+
+      try {
+        await scanner.start(
+          { facingMode: "environment" },
+          qrConfig,
+          onScanSuccess,
+          () => {}
+        );
+      } catch (startErr: any) {
+        const errName = startErr?.name || "";
+        const errMsg = (startErr?.message || "").toLowerCase();
+
+        // If environment facingMode is unsupported or overconstrained, try user/fallback camera
+        if (errName === "OverconstrainedError" || errMsg.includes("overconstrained")) {
+          await scanner.start(
+            true as any,
+            qrConfig,
+            onScanSuccess,
+            () => {}
+          );
+        } else {
+          throw startErr;
+        }
+      }
 
       setIsCameraActive(true);
       setIsStartingCamera(false);
@@ -215,10 +278,39 @@ export function UnifiedSearchOverlay({
       console.warn("Camera start failed:", err);
       setIsStartingCamera(false);
       setIsCameraActive(false);
-      setCameraError(
-        err?.message ||
-          "Could not initialize back camera. Please verify camera permissions or type barcode below."
-      );
+
+      const errName = err?.name || "";
+      const errMsg = (err?.message || "").toLowerCase();
+
+      if (
+        errName === "NotAllowedError" ||
+        errName === "PermissionDeniedError" ||
+        errMsg.includes("permission") ||
+        errMsg.includes("denied") ||
+        errMsg.includes("not allowed")
+      ) {
+        setCameraError(
+          "Camera permission denied. On iOS: go to Settings > Safari > Camera to Allow. On Android: tap the tune/lock icon in your address bar to Allow. Or enter the code manually below."
+        );
+      } else if (
+        errName === "NotFoundError" ||
+        errName === "DevicesNotFoundError" ||
+        errMsg.includes("no camera") ||
+        errMsg.includes("not found")
+      ) {
+        setCameraError("No camera detected on this device. You can type barcodes or food names manually below.");
+      } else if (
+        errName === "NotReadableError" ||
+        errName === "TrackStartError" ||
+        errMsg.includes("could not start video source") ||
+        errMsg.includes("in use")
+      ) {
+        setCameraError("Camera is currently in use by another tab or app. Please close other camera apps and retry.");
+      } else {
+        setCameraError(
+          err?.message || "Could not initialize camera. Please check camera permissions or enter code manually below."
+        );
+      }
     }
   };
 
@@ -235,6 +327,7 @@ export function UnifiedSearchOverlay({
     }
     setIsCameraActive(false);
     setIsStartingCamera(false);
+    setShowWatchdogTip(false);
   };
 
   // Cleanup camera on unmount or when modal closes
@@ -271,6 +364,7 @@ export function UnifiedSearchOverlay({
       is_organic: candidate.is_organic,
       source: candidate.source,
       confidence: candidate.confidence,
+      is_fallback: candidate.is_fallback,
     });
     setIsQuantityModalOpen(true);
   };
@@ -285,6 +379,21 @@ export function UnifiedSearchOverlay({
   // Content Block
   const content = (
     <div className="w-full flex flex-col space-y-4 text-stone-100 select-none">
+      {/* Offline Status Alert Banner */}
+      {!isOnline && (
+        <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between gap-2 shadow-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <WifiOff className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="leading-tight text-[11px] sm:text-xs">
+              <strong>Offline Mode:</strong> Camera scanning &amp; local produce PLU dictionary remain active. Unindexed barcodes can be named &amp; queued for offline sync.
+            </span>
+          </div>
+          <span className="text-[10px] font-mono uppercase font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/30 shrink-0">
+            Local Cache
+          </span>
+        </div>
+      )}
+
       {/* ==================================================================== */}
       {/* 1. CAMERA SCANNER VIEWPORT ON TOP                                    */}
       {/* ==================================================================== */}
@@ -305,7 +414,7 @@ export function UnifiedSearchOverlay({
               <button
                 type="button"
                 onClick={stopCamera}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[40px] rounded-xl text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 transition-all cursor-pointer shadow-xs active:scale-98"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-xl text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 transition-all cursor-pointer shadow-xs active:scale-98"
               >
                 <CameraOff className="w-3.5 h-3.5" />
                 <span>Pause</span>
@@ -315,7 +424,7 @@ export function UnifiedSearchOverlay({
                 type="button"
                 onClick={startCamera}
                 disabled={isStartingCamera}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 min-h-[40px] rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-all cursor-pointer disabled:opacity-50 active:scale-98"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 min-h-[44px] rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-all cursor-pointer disabled:opacity-50 active:scale-98"
               >
                 {isStartingCamera ? (
                   <>
@@ -343,7 +452,7 @@ export function UnifiedSearchOverlay({
 
           {/* Idle / Inactive Overlay with Reticle */}
           {!isCameraActive && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-3 bg-gradient-to-b from-stone-900/50 via-stone-950 to-stone-950">
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-5 text-center space-y-3 bg-gradient-to-b from-stone-900/50 via-stone-950 to-stone-950">
               <div className="relative p-3.5 rounded-2xl bg-stone-900 border border-stone-800 shadow-inner group">
                 <Camera className="w-7 h-7 text-stone-500 group-hover:text-amber-400 transition-colors" />
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
@@ -359,9 +468,19 @@ export function UnifiedSearchOverlay({
               </div>
 
               {cameraError && (
-                <div className="p-2.5 rounded-xl bg-rose-950/40 border border-rose-900/60 text-rose-300 text-[11px] flex items-center gap-2 max-w-sm">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-                  <span className="text-left leading-tight">{cameraError}</span>
+                <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-900/80 text-rose-300 text-[11px] flex flex-col items-stretch gap-2.5 max-w-sm">
+                  <div className="flex items-start gap-2 text-left">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+                    <span className="leading-tight">{cameraError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={focusManualEntry}
+                    className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 active:scale-98 text-stone-100 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-stone-700"
+                  >
+                    <CornerDownLeft className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Enter Barcode Numbers Manually Below</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -391,6 +510,29 @@ export function UnifiedSearchOverlay({
               </div>
             </div>
           )}
+
+          {/* Watchdog Assistive Overlay (after 8s of unassisted scanning) */}
+          {isCameraActive && showWatchdogTip && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute bottom-2 inset-x-2 z-20 p-2.5 rounded-2xl bg-stone-900/95 border border-amber-500/50 backdrop-blur-md shadow-2xl flex items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Lightbulb className="w-4 h-4 text-amber-400 shrink-0" />
+                <p className="text-[11px] text-stone-300 leading-tight">
+                  Scanning slow? Check lighting or hold steady.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={focusManualEntry}
+                className="min-h-[44px] px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shrink-0 flex items-center gap-1 shadow-md active:scale-95 transition-all cursor-pointer"
+              >
+                <span>Type Code</span>
+              </button>
+            </motion.div>
+          )}
         </div>
       </div>
 
@@ -408,8 +550,9 @@ export function UnifiedSearchOverlay({
             )}
           </div>
 
-          {/* EXACT REQUIRED PLACEHOLDER */}
+          {/* EXACT REQUIRED PLACEHOLDER WITH AUTO-FOCUS REF */}
           <input
+            ref={searchInputRef}
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}

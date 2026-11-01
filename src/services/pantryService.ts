@@ -53,8 +53,10 @@ export interface UnifiedSearchResult {
     | "open_food_facts_barcode" 
     | "open_food_facts_search" 
     | "generic_ingredient_fallback"
-    | "local_fallback";
+    | "local_fallback"
+    | "manual_fallback";
   confidence: number;                  // 0.0 to 1.0 confidence score
+  is_fallback?: boolean;
 }
 
 /**
@@ -193,7 +195,7 @@ export function lookupPLU(rawCode: string): UnifiedSearchResult | null {
 // LAYER 1: NETWORK & API SERVICE LAYER (OPEN FOOD FACTS & FALLBACKS)
 // ============================================================================
 
-const OFF_API_TIMEOUT_MS = 5000;
+const OFF_API_TIMEOUT_MS = 2500;
 const USER_AGENT = "CurationKitchen-PantryScanner/2.0 (web-applet; barry0568@gmail.com)";
 
 /**
@@ -203,6 +205,11 @@ const USER_AGENT = "CurationKitchen-PantryScanner/2.0 (web-applet; barry0568@gma
 export async function lookupBarcodeOpenFoodFacts(barcode: string): Promise<UnifiedSearchResult | null> {
   const cleanBarcode = barcode.trim().replace(/\D/g, "");
   if (!cleanBarcode || cleanBarcode.length < 8) {
+    return null;
+  }
+
+  // Fast-fail if browser is completely offline
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
     return null;
   }
 
@@ -267,6 +274,11 @@ export async function lookupBarcodeOpenFoodFacts(barcode: string): Promise<Unifi
 export async function searchOpenFoodFacts(query: string): Promise<UnifiedSearchResult[]> {
   const cleanQuery = query.trim();
   if (!cleanQuery) return [];
+
+  // Fast-fail if browser is completely offline
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return [];
+  }
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), OFF_API_TIMEOUT_MS);
@@ -499,9 +511,12 @@ export async function unifiedPantrySearch(input: string): Promise<UnifiedSearchR
       return [barcodeResult];
     }
 
-    // If barcode not in Open Food Facts, fallback to generic parsing
-    const generic = parseGenericIngredientFallback(`Barcode Item ${cleanInput}`);
+    // If barcode not in Open Food Facts, fallback to manual naming tier
+    const generic = parseGenericIngredientFallback(`Unidentified Barcode (${cleanInput})`);
     generic.upc_code = cleanInput;
+    generic.source = "manual_fallback";
+    generic.confidence = 0.4;
+    generic.is_fallback = true;
     return [generic];
   }
 

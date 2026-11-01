@@ -35,7 +35,22 @@ export interface ResolvedPantryItem {
   image_url?: string;
   source?: string;
   confidence?: number;
+  is_fallback?: boolean;
 }
+
+export const PANTRY_CATEGORIES = [
+  "Produce",
+  "Pantry Staples",
+  "Dairy & Eggs",
+  "Proteins",
+  "Spices & Oils",
+  "Grains & Baking",
+  "Bakery",
+  "Beverages",
+  "Frozen",
+  "Snacks",
+  "Other"
+] as const;
 
 export interface QuantityConfirmationModalProps {
   isOpen: boolean;
@@ -165,6 +180,13 @@ export function QuantityConfirmationModal({
   const pantryItemsCount = pantryItems.length;
   const isFreeTierCapReached = !isPremium && pantryItemsCount >= LIMIT_FREE_PANTRY_ITEMS;
 
+  // Determine if item is an unindexed fallback barcode
+  const isFallbackItem = Boolean(
+    resolvedItem?.is_fallback ||
+    resolvedItem?.source === "manual_fallback" ||
+    (resolvedItem?.item_name && resolvedItem.item_name.includes("Unidentified Barcode"))
+  );
+
   // Derive initial values from resolved item
   const resolvedName = useMemo(() => {
     return resolvedItem?.item_name || resolvedItem?.name || "Kitchen Ingredient";
@@ -176,6 +198,11 @@ export function QuantityConfirmationModal({
 
   const [quantity, setQuantity] = useState<number>(1);
   const [unit, setUnit] = useState<string>("units");
+  const [customName, setCustomName] = useState<string>("");
+  const [customCategory, setCustomCategory] = useState<string>("Pantry Staples");
+  const [isEditingName, setIsEditingName] = useState<boolean>(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const nameInputRef = React.useRef<HTMLInputElement | null>(null);
 
   // Reset local state whenever a new resolved item is opened
   useEffect(() => {
@@ -191,6 +218,27 @@ export function QuantityConfirmationModal({
         ? resolvedItem.unit 
         : unitConfig.defaultUnit);
       setSaveFeedback(null);
+      setNameError(null);
+
+      const isFallback = Boolean(
+        resolvedItem.is_fallback ||
+        resolvedItem.source === "manual_fallback" ||
+        (resolvedItem.item_name && resolvedItem.item_name.includes("Unidentified Barcode"))
+      );
+
+      const initialCustomName = isFallback && resolvedItem.item_name?.includes("Unidentified Barcode")
+        ? ""
+        : (resolvedItem.item_name || resolvedItem.name || "");
+
+      setCustomName(initialCustomName);
+      setCustomCategory(resolvedItem.category || (unitConfig.isProduce ? "Produce" : "Pantry Staples"));
+      setIsEditingName(isFallback);
+
+      if (isFallback) {
+        setTimeout(() => {
+          nameInputRef.current?.focus();
+        }, 150);
+      }
     }
   }, [isOpen, resolvedItem, unitConfig]);
 
@@ -198,6 +246,10 @@ export function QuantityConfirmationModal({
 
   const currentStatus = calculatePantryStockStatus(quantity);
   const isHiddenByCoreRule = !isPantryItemVisible({ quantity, status: currentStatus });
+
+  // Effective display name & category
+  const activeName = customName.trim() || (isFallbackItem ? "New Food Item" : resolvedName);
+  const activeCategory = customCategory || resolvedItem.category || (unitConfig.isProduce ? "Produce" : "Pantry Staples");
 
   // Stepper Handlers
   const handleDecrement = () => {
@@ -221,6 +273,13 @@ export function QuantityConfirmationModal({
   const handleCommitToPantry = async () => {
     if (isSubmitting) return;
 
+    // Validation for unindexed fallback item
+    if (isFallbackItem && !customName.trim()) {
+      setNameError("Please enter a name for this item before saving.");
+      nameInputRef.current?.focus();
+      return;
+    }
+
     // PremiumGatekeeper evaluation: block Free tier if limit reached
     if (isFreeTierCapReached) {
       setSaveFeedback(`⚠️ Free tier storage limit reached (${pantryItemsCount}/${LIMIT_FREE_PANTRY_ITEMS} items). Please upgrade to Premium to continue adding ingredients.`);
@@ -228,21 +287,21 @@ export function QuantityConfirmationModal({
     }
 
     setIsSubmitting(true);
+    setNameError(null);
 
     try {
       const nowIso = new Date().toISOString();
       const rawPlu = resolvedItem.plu_code || (resolvedItem.upc?.startsWith("PLU-") ? resolvedItem.upc.replace("PLU-", "") : null);
       const rawUpc = resolvedItem.upc_code || (resolvedItem.upc && !resolvedItem.upc.startsWith("PLU-") ? resolvedItem.upc : null);
 
-      const resolvedCategory = resolvedItem.category || (unitConfig.isProduce ? "Produce" : "Pantry Staples");
-      const shelfDays = calculateEstimatedShelfLifeDays(resolvedName, resolvedCategory);
+      const shelfDays = calculateEstimatedShelfLifeDays(activeName, activeCategory);
       const useByDate = new Date(Date.now() + shelfDays * 86400000).toISOString();
 
       // Build complete PantryItem record payload
       const pantryRecordPayload: Partial<PantryItem> = {
-        name: resolvedName,
-        item_name: resolvedName,
-        category: resolvedCategory,
+        name: activeName,
+        item_name: activeName,
+        category: activeCategory,
         quantity: quantity,
         unit: unit,
         status: currentStatus,
@@ -268,8 +327,8 @@ export function QuantityConfirmationModal({
 
       setSaveFeedback(
         quantity === 0
-          ? `Saved "${resolvedName}" (0 ${unit}) — Marked Out of Stock & hidden from active shelves per core rules.`
-          : `🎉 "${resolvedName}" (${quantity} ${unit}) added to pantry!`
+          ? `Saved "${activeName}" (0 ${unit}) — Marked Out of Stock & hidden from active shelves per core rules.`
+          : `🎉 "${activeName}" (${quantity} ${unit}) added to pantry!`
       );
 
       setTimeout(() => {
@@ -284,8 +343,8 @@ export function QuantityConfirmationModal({
   };
 
   const categoryEmoji = getProductEmoji(
-    resolvedItem.category || (unitConfig.isProduce ? "Produce" : "Pantry Staples"),
-    resolvedName
+    activeCategory,
+    activeName
   );
 
   return (
@@ -325,9 +384,15 @@ export function QuantityConfirmationModal({
             <div className="space-y-2">
               {/* Badges Row */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-[#6E8B6B]/15 text-[#6E8B6B] border border-[#6E8B6B]/30 font-mono">
-                  <Sparkles className="w-3 h-3" /> Resolved Product
-                </span>
+                {isFallbackItem ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 font-mono">
+                    <AlertTriangle className="w-3 h-3 text-amber-600 dark:text-amber-400" /> Unindexed Barcode
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-[#6E8B6B]/15 text-[#6E8B6B] border border-[#6E8B6B]/30 font-mono">
+                    <Sparkles className="w-3 h-3" /> Resolved Product
+                  </span>
+                )}
 
                 {resolvedItem.is_organic && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-mono">
@@ -348,28 +413,118 @@ export function QuantityConfirmationModal({
                 )}
               </div>
 
-              {/* Resolved Item Name Header */}
-              <div className="flex items-start gap-3 pt-1">
-                <span className="text-3xl p-2.5 rounded-2xl bg-white dark:bg-zinc-800 border border-[#E6DFC6] dark:border-zinc-700 shadow-xs shrink-0 select-none">
-                  {categoryEmoji}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h3 
-                    id="quantity-modal-title" 
-                    className="text-xl sm:text-2xl font-serif font-bold text-zinc-900 dark:text-white leading-tight break-words"
-                  >
-                    {resolvedName}
-                  </h3>
-                  <p className="text-xs text-stone-500 dark:text-zinc-400 mt-0.5">
-                    Category: <span className="font-semibold text-stone-700 dark:text-zinc-300">{resolvedItem.category || (unitConfig.isProduce ? "Produce" : "Pantry Staples")}</span>
-                    {resolvedItem.brand ? ` • Brand: ${resolvedItem.brand}` : ""}
-                  </p>
-                  <p className="text-[11px] text-[#6E8B6B] dark:text-[#8cb088] font-medium flex items-center gap-1 mt-1">
+              {/* Resolved Item Name Header or Editable Form */}
+              {isFallbackItem || isEditingName ? (
+                <div className="space-y-3 pt-1">
+                  {isFallbackItem && (
+                    <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 text-xs">
+                      <p className="font-bold flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>Barcode not yet indexed</span>
+                      </p>
+                      <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90 mt-0.5">
+                        Name your product and select a category to save it in two taps.
+                      </p>
+                    </div>
+                  )}
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label 
+                        htmlFor="custom-item-name"
+                        className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-zinc-400"
+                      >
+                        Product Name <span className="text-[#D95338]">*</span>
+                      </label>
+                      {!isFallbackItem && (
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingName(false)}
+                          className="text-[11px] font-bold text-stone-500 hover:text-stone-800 dark:hover:text-zinc-200 underline cursor-pointer"
+                        >
+                          Done
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      id="custom-item-name"
+                      ref={nameInputRef}
+                      type="text"
+                      value={customName}
+                      onChange={(e) => {
+                        setCustomName(e.target.value);
+                        setNameError(null);
+                      }}
+                      placeholder="e.g., Almond Butter, Organic Salsa..."
+                      className="w-full px-3.5 py-2.5 min-h-[46px] rounded-xl bg-white dark:bg-zinc-800 border border-[#E6DFC6] dark:border-zinc-700 text-zinc-900 dark:text-white font-medium text-sm focus:outline-hidden focus:ring-2 focus:ring-[#6E8B6B] shadow-inner"
+                    />
+                    {nameError && (
+                      <p className="text-[11px] text-[#D95338] font-bold mt-1 flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        <span>{nameError}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label 
+                      htmlFor="custom-item-category"
+                      className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-zinc-400 mb-1"
+                    >
+                      Category
+                    </label>
+                    <select
+                      id="custom-item-category"
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white dark:bg-zinc-800 border border-[#E6DFC6] dark:border-zinc-700 text-zinc-900 dark:text-white font-medium text-xs focus:outline-hidden focus:ring-2 focus:ring-[#6E8B6B] cursor-pointer"
+                    >
+                      {PANTRY_CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <p className="text-[11px] text-[#6E8B6B] dark:text-[#8cb088] font-medium flex items-center gap-1 pt-0.5">
                     <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                    <span>Est. Shelf-Life: ~{calculateEstimatedShelfLifeDays(resolvedName, resolvedItem.category || (unitConfig.isProduce ? "Produce" : "Pantry Staples"))} days • Date-tracking enabled</span>
+                    <span>Est. Shelf-Life: ~{calculateEstimatedShelfLifeDays(activeName, activeCategory)} days</span>
                   </p>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-start gap-3 pt-1">
+                  <span className="text-3xl p-2.5 rounded-2xl bg-white dark:bg-zinc-800 border border-[#E6DFC6] dark:border-zinc-700 shadow-xs shrink-0 select-none">
+                    {categoryEmoji}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 
+                        id="quantity-modal-title" 
+                        className="text-xl sm:text-2xl font-serif font-bold text-zinc-900 dark:text-white leading-tight break-words"
+                      >
+                        {activeName}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingName(true)}
+                        className="min-h-[44px] min-w-[44px] p-2 rounded-xl text-stone-400 hover:text-stone-700 dark:hover:text-zinc-200 hover:bg-stone-200/50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                        aria-label="Edit product name"
+                      >
+                        <Tag className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-stone-500 dark:text-zinc-400 mt-0.5">
+                      Category: <span className="font-semibold text-stone-700 dark:text-zinc-300">{activeCategory}</span>
+                      {resolvedItem.brand ? ` • Brand: ${resolvedItem.brand}` : ""}
+                    </p>
+                    <p className="text-[11px] text-[#6E8B6B] dark:text-[#8cb088] font-medium flex items-center gap-1 mt-1">
+                      <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                      <span>Est. Shelf-Life: ~{calculateEstimatedShelfLifeDays(activeName, activeCategory)} days • Date-tracking enabled</span>
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 2. QUANTITY STEPPER COMPONENT */}
