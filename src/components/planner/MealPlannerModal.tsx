@@ -11,12 +11,20 @@ import { isPantryItemVisible } from "../../services/pantryService";
 import { 
   X, Calendar, Plus, Trash2, Sparkles, Search, Check, 
   RefreshCw, ChevronRight, Home, Lock, Star, Sparkle, Coffee,
-  ChefHat, ArrowRight, ShoppingBag, CheckCircle2, GripVertical
+  ChefHat, ArrowRight, ShoppingBag, CheckCircle2, GripVertical,
+  CheckSquare, Square
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { 
+  calculateGroceryDeficit, 
+  getScheduledMealsFromPlan, 
+  syncDeficitToGroceryList, 
+  DeficitGapAnalysis, 
+  DeficitGapItem 
+} from "../../services/groceryService";
 
 interface MealPlannerModalProps {
   isOpen?: boolean;
@@ -80,10 +88,12 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
   // Drag and Drop state
   const [draggedItem, setDraggedItem] = useState<{ day: string; slot: "breakfast" | "lunch" | "dinner"; value: string } | null>(null);
 
-  // Sync Grocery Notification Modal
+  // Sync Grocery Notification Modal & Deficit Gap Engine State
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [syncedIngredientsCount, setSyncedIngredientsCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [deficitAnalysis, setDeficitAnalysis] = useState<DeficitGapAnalysis | null>(null);
+  const [checkedDeficitItemIds, setCheckedDeficitItemIds] = useState<Record<string, boolean>>({});
 
   // AI Planner generation states
   const [isAiGenerating, setIsAiGenerating] = useState(false);
@@ -224,57 +234,41 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
     };
   };
 
-  // 3. "AUTOMATED GROCERY LIST" SYNC ACTION
+  // 3. "AUTOMATED GROCERY LIST" DEFICIT GAP SYNC ACTION (SAGE GREEN PIPELINE)
   const handleGenerateSyncGroceryList = async () => {
     if (!mealPlan) return;
     setIsSyncing(true);
 
-    const allIngredients: string[] = [];
-
-    // Collect all ingredients from all scheduled slots across all 7 days
-    DAYS_OF_WEEK.forEach(({ key }) => {
-      const dayData = mealPlan[key];
-      if (dayData) {
-        (["breakfast", "lunch", "dinner"] as const).forEach((slot) => {
-          const val = dayData[slot];
-          if (val) {
-            const recipe = recipes.find(r => r.id === val);
-            if (recipe && recipe.ingredients && recipe.ingredients.length > 0) {
-              recipe.ingredients.forEach(i => {
-                const str = typeof i === "string" ? i : `${i.canonicalAmount || i.minAmount || ""} ${i.unit || ""} ${i.name} ${(i.modifiers || []).join(" ")}`.trim();
-                allIngredients.push(str);
-              });
-            } else if (val) {
-              allIngredients.push(val);
-            }
-          }
-        });
-      }
-    });
-
-    if (allIngredients.length === 0) {
-      alert("No scheduled meals found in your calendar! Plan a few meals first, then generate your sync grocery list.");
-      setIsSyncing(false);
-      return;
-    }
-
     try {
-      // Sync each ingredient to the grocery list
-      for (const ing of allIngredients) {
-        await recipeClient.grocery.create({
-          name: ing,
-          category: "Meal Plan Sync",
-          quantity: "1 unit",
-          checked: false,
-        });
+      // 1. Read the active 7-day meal planner schedule
+      const scheduledMeals = getScheduledMealsFromPlan(mealPlan, recipes);
+
+      if (scheduledMeals.length === 0) {
+        alert("No scheduled meals found in your calendar! Plan a few meals first, then generate your sync grocery list.");
+        setIsSyncing(false);
+        return;
       }
 
-      queryClient.invalidateQueries({ queryKey: ["grocery"] });
-      setSyncedIngredientsCount(allIngredients.length);
+      // 2. Fetch complete live pantry inventory (including quantity: 0 items per Gap C)
+      // pantryItems from useQuery already contains the complete live inventory list
+      const analysis = calculateGroceryDeficit(scheduledMeals, pantryItems);
+      setDeficitAnalysis(analysis);
+
+      // 3. If deficit > 0, append missing items to local in-app grocery list database
+      if (analysis.deficitItems.length > 0) {
+        await syncDeficitToGroceryList(analysis.deficitItems);
+        queryClient.invalidateQueries({ queryKey: ["grocery"] });
+        setSyncedIngredientsCount(analysis.deficitItemsCount);
+      } else {
+        setSyncedIngredientsCount(0);
+      }
+
+      // Reset local check states for newly calculated deficit items
+      setCheckedDeficitItemIds({});
       setIsSyncModalOpen(true);
     } catch (err) {
-      console.error("Failed syncing grocery list:", err);
-      alert(`Synced ${allIngredients.length} ingredients to your Grocery List!`);
+      console.error("Failed calculating and syncing grocery deficit gap:", err);
+      alert("An error occurred while calculating your grocery deficit gap. Please try again.");
     } finally {
       setIsSyncing(false);
     }
@@ -590,34 +584,148 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
         </div>
       </main>
 
-      {/* SYNC GROCERY SUCCESS MODAL */}
+      {/* SYNC GROCERY SUCCESS MODAL (SAGE GREEN LIST) */}
       <AnimatePresence>
         {isSyncModalOpen && (
-          <div className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 bg-stone-900/50 backdrop-blur-xs flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#FAF6EE] dark:bg-zinc-900 border border-[#E6DFC6] dark:border-zinc-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 text-center"
+              className="bg-[#FAF6EE] dark:bg-zinc-900 border border-[#E6DFC6] dark:border-zinc-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col text-left"
             >
-              <div className="w-14 h-14 rounded-full bg-[#6E8B6B]/15 text-[#6E8B6B] flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 border-b border-[#E6DFC6] dark:border-zinc-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#6E8B6B]/15 text-[#6E8B6B] flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-7 h-7 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-serif font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                      <span>Grocery Deficit Synced</span>
+                      <span className="text-[10px] font-sans font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#6E8B6B]/20 text-[#4c6749]">
+                        Sage Green List
+                      </span>
+                    </h3>
+                    <p className="text-xs text-stone-500 dark:text-zinc-400">
+                      Evaluated against real-time pantry inventory & depleted stock.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsSyncModalOpen(false)}
+                  className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 p-1 rounded-full cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <div className="space-y-2">
-                <h3 className="text-xl font-serif font-bold text-zinc-900 dark:text-white">
-                  Grocery List Synced!
-                </h3>
-                <p className="text-xs text-stone-600 dark:text-zinc-400 leading-relaxed">
-                  Successfully extracted <strong className="text-[#6E8B6B]">{syncedIngredientsCount} ingredients</strong> from your weekly meal plan and merged them into your Grocery List.
-                </p>
+              {/* Deficit Metric Highlights */}
+              <div className="grid grid-cols-3 gap-2 py-1">
+                <div className="p-2.5 rounded-2xl bg-white dark:bg-zinc-800/80 border border-[#E6DFC6] dark:border-zinc-700 text-center">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-stone-400 block">Required</span>
+                  <span className="text-base font-bold text-zinc-900 dark:text-white">
+                    {deficitAnalysis?.uniqueIngredientsCount || 0}
+                  </span>
+                  <span className="text-[9px] text-stone-400 block">ingredients</span>
+                </div>
+                <div className="p-2.5 rounded-2xl bg-[#6E8B6B]/10 border border-[#6E8B6B]/25 text-center">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[#6E8B6B] block">In Pantry</span>
+                  <span className="text-base font-bold text-[#6E8B6B]">
+                    {deficitAnalysis?.coveredItemsCount || 0}
+                  </span>
+                  <span className="text-[9px] text-[#6E8B6B]/80 block">covered</span>
+                </div>
+                <div className="p-2.5 rounded-2xl bg-[#D95338]/10 border border-[#D95338]/25 text-center">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[#D95338] block">Deficit Gap</span>
+                  <span className="text-base font-bold text-[#D95338]">
+                    {deficitAnalysis?.deficitItemsCount || 0}
+                  </span>
+                  <span className="text-[9px] text-[#D95338]/80 block">to buy</span>
+                </div>
               </div>
 
-              <div className="pt-3 flex items-center justify-center gap-3">
+              {/* List of deficit items or 100% covered state */}
+              <div className="flex-grow overflow-y-auto pr-1 space-y-2 min-h-0 max-h-[320px]">
+                {(!deficitAnalysis || deficitAnalysis.deficitItems.length === 0) ? (
+                  <div className="text-center py-8 px-4 rounded-2xl bg-white dark:bg-zinc-800 border border-[#E6DFC6] space-y-2">
+                    <span className="text-3xl">🎉</span>
+                    <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                      Kitchen Fully Stocked!
+                    </h4>
+                    <p className="text-xs text-stone-500 max-w-xs mx-auto leading-relaxed">
+                      All required ingredients for your planned 7-day meals are already available in your pantry inventory.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-stone-500 px-1">
+                      <span>Items Added to Grocery List ({deficitAnalysis.deficitItems.length})</span>
+                      <span className="text-[10px] text-stone-400">Click item to check off</span>
+                    </div>
+
+                    {deficitAnalysis.deficitItems.map((item) => {
+                      const isChecked = !!checkedDeficitItemIds[item.id];
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            setCheckedDeficitItemIds(prev => ({ ...prev, [item.id]: !prev[item.id] }));
+                          }}
+                          className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 select-none ${
+                            isChecked
+                              ? "bg-stone-100/70 dark:bg-zinc-800/40 border-stone-200 dark:border-zinc-800 opacity-60"
+                              : "bg-white dark:bg-zinc-800 border-[#E6DFC6] dark:border-zinc-700/80 hover:border-[#6E8B6B] shadow-2xs"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <button
+                              type="button"
+                              className="text-stone-400 hover:text-[#6E8B6B] shrink-0"
+                            >
+                              {isChecked ? (
+                                <CheckSquare className="w-4 h-4 text-[#6E8B6B]" />
+                              ) : (
+                                <Square className="w-4 h-4 text-stone-400" />
+                              )}
+                            </button>
+
+                            <div className="min-w-0 space-y-0.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className={`text-xs font-bold capitalize truncate ${
+                                  isChecked ? "line-through text-stone-400" : "text-zinc-900 dark:text-zinc-100"
+                                }`}>
+                                  {item.name}
+                                </span>
+                                <span className="text-[9px] font-medium px-2 py-0.2 rounded-full bg-stone-100 dark:bg-zinc-700 text-stone-600 dark:text-stone-300">
+                                  {item.category}
+                                </span>
+                              </div>
+
+                              <p className="text-[10px] text-stone-500 dark:text-zinc-400">
+                                Need {item.formattedRequiredQuantity} • In Pantry: <strong className="text-stone-600 dark:text-stone-300">{item.formattedPantryQuantity}</strong>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="text-xs font-bold text-[#D95338] bg-[#D95338]/10 px-2.5 py-1 rounded-full whitespace-nowrap">
+                              +{item.formattedDeficitQuantity}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Action buttons (STRICT CONSTRAINT: strictly in-app navigation, no affiliate links) */}
+              <div className="pt-2 border-t border-[#E6DFC6] dark:border-zinc-800 flex items-center justify-between gap-3">
                 <Button
                   onClick={() => setIsSyncModalOpen(false)}
                   variant="outline"
-                  className="rounded-full border-[#E6DFC6] text-xs font-medium cursor-pointer"
+                  className="rounded-full border-[#E6DFC6] text-xs font-medium cursor-pointer h-11 px-5"
                 >
                   Stay on Planner
                 </Button>
@@ -626,10 +734,10 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
                     setIsSyncModalOpen(false);
                     navigate("/pantry");
                   }}
-                  className="rounded-full bg-[#6E8B6B] hover:bg-[#536d50] text-white text-xs font-bold gap-1.5 cursor-pointer"
+                  className="rounded-full bg-[#6E8B6B] hover:bg-[#536d50] text-white text-xs font-bold gap-2 cursor-pointer h-11 px-5 shadow-sm"
                 >
-                  <ShoppingBag className="w-3.5 h-3.5" />
-                  <span>View Pantry & Grocery</span>
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>View Grocery List</span>
                 </Button>
               </div>
             </motion.div>
