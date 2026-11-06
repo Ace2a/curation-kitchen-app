@@ -35,13 +35,7 @@ export default function LocalSearchPage() {
   });
 
   return (
-    <div 
-      className="min-h-screen text-zinc-900 flex flex-col font-sans selection:bg-red-200 relative bg-cover bg-center bg-no-repeat bg-fixed"
-      style={{ backgroundImage: `url('https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1920&q=80')` }}
-    >
-      {/* Dark overlay for rich, high-contrast readibility */}
-      <div className="absolute inset-0 bg-black/45 z-0" />
-
+    <div className="min-h-screen text-zinc-900 dark:text-zinc-100 flex flex-col font-sans selection:bg-red-200 relative">
       <div className="relative z-10 flex flex-col min-h-screen justify-between">
         {/* Navigation Header */}
         <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-2 border-red-600 shadow-sm py-3 flex items-center">

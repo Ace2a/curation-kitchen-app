@@ -377,7 +377,7 @@ export function MealPlannerModal({ isOpen = true, onClose, isPage = true }: Meal
             <Link to="/">
               <Button variant="outline" size="sm" className="gap-1.5 rounded-full border-[#E6DFC6] dark:border-zinc-800 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-zinc-900 cursor-pointer">
                 <Home className="w-3.5 h-3.5 text-[#6E8B6B]" />
-                <span>Workspace</span>
+                <span>Home</span>
               </Button>
             </Link>
             <div className="h-4 w-px bg-[#E6DFC6] dark:bg-zinc-800 hidden sm:block" />

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Terracotta gradient -->
+    <linearGradient id="terracottaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EA580C"/>
+      <stop offset="50%" stop-color="#D95338"/>
+      <stop offset="100%" stop-color="#B91C1C"/>
+    </linearGradient>
+    <!-- Butter-cream accent gradient -->
+    <linearGradient id="creamGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FAF6EE"/>
+    </linearGradient>
+    <!-- Warm Gold accent -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <!-- Subtle drop shadow -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Canvas Background (Squircle) -->
+  <rect width="512" height="512" rx="112" fill="url(#terracottaGrad)"/>
+
+  <!-- Inner Subtle Ring -->
+  <rect x="24" y="24" width="464" height="464" rx="96" fill="none" stroke="#FAF6EE" stroke-width="3" stroke-opacity="0.3"/>
+
+  <!-- Cloche / Chef Domed Serving Lid (Centerpiece) -->
+  <g filter="url(#shadow)" transform="translate(0, 10)">
+    <!-- Cloche Top Handle Ball -->
+    <circle cx="256" cy="148" r="22" fill="url(#goldGrad)"/>
+    <path d="M251 170 h10 v12 h-10 z" fill="url(#goldGrad)"/>
+
+    <!-- Cloche Dome -->
+    <path d="M120 286 C120 186 182 176 256 176 C330 176 392 186 392 286 Z" fill="url(#creamGrad)"/>
+
+    <!-- Cloche Rim Base -->
+    <rect x="100" y="286" width="312" height="24" rx="12" fill="url(#goldGrad)"/>
+
+    <!-- Serving Platter Plate Base -->
+    <path d="M80 326 C120 338 392 338 432 326 C432 344 396 358 256 358 C116 358 80 344 80 326 Z" fill="url(#creamGrad)" opacity="0.95"/>
+    
+    <!-- Kitchen Sparkle / AI Star Accent -->
+    <path d="M370 140 Q370 160 390 160 Q370 160 370 180 Q370 160 350 160 Q370 160 370 140 Z" fill="url(#goldGrad)"/>
+    <path d="M140 180 Q140 192 152 192 Q140 192 140 204 Q140 192 128 192 Q140 192 140 180 Z" fill="url(#goldGrad)" opacity="0.85"/>
+
+    <!-- Decorative Culinary Fork & Knife Motifs on Dome -->
+    <path d="M228 226 C228 244 234 256 242 260 L242 276 L246 276 L246 260 C254 256 260 244 260 226 Z" fill="#D95338" opacity="0.2"/>
+    <rect x="254" y="218" width="4" height="24" rx="2" fill="#D95338" opacity="0.8"/>
+    <rect x="242" y="218" width="4" height="24" rx="2" fill="#D95338" opacity="0.8"/>
+  </g>
+
+  <!-- Bottom Brand Text Monogram Subtitle -->
+  <text x="256" y="416" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="34" font-weight="800" fill="#FAF6EE" letter-spacing="4">CURATION KITCHEN</text>
+  <text x="256" y="446" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="600" fill="#FCD34D" letter-spacing="3">AI MEAL PLANNER &amp; PANTRY</text>
+</svg>

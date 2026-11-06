@@ -101,6 +101,7 @@ export function StoreComparison({ items, selectedProvince, onSelectStore, active
     }
     setIsDetectingGps(true);
     setGpsError(null);
+    // Adhere to Google Play Minimum Location Scope principle (coarse / approximate location)
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setGpsCoordinates({
@@ -113,7 +114,7 @@ export function StoreComparison({ items, selectedProvince, onSelectStore, active
         setGpsError("Could not access location. Please select a city manually.");
         setIsDetectingGps(false);
       },
-      { timeout: 8000 }
+      { timeout: 8000, enableHighAccuracy: false, maximumAge: 60000 }
     );
   };
 
@@ -231,16 +232,20 @@ export function StoreComparison({ items, selectedProvince, onSelectStore, active
 
       {/* Location selector */}
       <div className="space-y-2.5 bg-zinc-50 dark:bg-zinc-950 p-3 rounded-xl border border-zinc-150 dark:border-zinc-850">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-black uppercase text-zinc-400">Your Shopping Location</span>
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <span className="text-[10px] font-black uppercase text-zinc-400 block">Your Shopping Location</span>
+            <span className="text-[9px] text-zinc-500 block">Approximate distance only • No background tracking</span>
+          </div>
           <button
             type="button"
             onClick={handleUseGps}
             disabled={isDetectingGps}
-            className="min-h-[38px] px-3 py-1 rounded-lg text-xs font-bold text-amber-600 hover:text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 flex items-center gap-1 transition-all cursor-pointer select-none"
+            className="min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold text-amber-600 hover:text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 flex items-center gap-1.5 transition-all cursor-pointer select-none shrink-0"
+            aria-label="Use approximate location to calculate distance to stores"
           >
             <MapPin className="w-3.5 h-3.5" />
-            <span>{isDetectingGps ? "Locating..." : "Use My GPS"}</span>
+            <span>{isDetectingGps ? "Locating..." : "Use My Location"}</span>
           </button>
         </div>
 

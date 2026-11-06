@@ -226,7 +226,19 @@ fun PaywallScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Google Play Subscription Compliance Notice
+            Text(
+                text = "Subscription automatically renews at $pricingText until canceled in Google Play Subscriptions. You can cancel at any time with no termination fees. Promotional terms apply only during the promotional period, after which standard subscription pricing applies.",
+                fontSize = 11.sp,
+                color = NeutralMedium,
+                textAlign = TextAlign.Center,
+                lineHeight = 15.sp,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

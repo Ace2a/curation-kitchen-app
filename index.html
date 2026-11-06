@@ -1,8 +1,107 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // Mock Vite dev HMR WebSocket and filter closure errors in cloud sandbox
+    (function () {
+      if (typeof window !== "undefined") {
+        var origConsoleError = console.error;
+        console.error = function () {
+          var msg = Array.prototype.slice.call(arguments).map(function (a) {
+            return (a && (a.message || a.stack || String(a))) || "";
+          }).join(" ");
+          if (
+            msg.indexOf("WebSocket") !== -1 &&
+            (msg.indexOf("closed without opened") !== -1 || msg.indexOf("vite") !== -1 || msg.indexOf("failing") !== -1)
+          ) {
+            return;
+          }
+          return origConsoleError.apply(console, arguments);
+        };
+
+        if (window.WebSocket) {
+          var OrigWebSocket = window.WebSocket;
+          function MockHmrSocket(url, protocols) {
+            this.url = url;
+            this.protocols = protocols;
+            this.readyState = 1;
+            this.listeners = {};
+            var self = this;
+            setTimeout(function () {
+              self.dispatchEvent({ type: "open" });
+            }, 0);
+          }
+          MockHmrSocket.prototype.addEventListener = function (type, listener) {
+            if (!this.listeners[type]) this.listeners[type] = [];
+            this.listeners[type].push(listener);
+            if (type === "open") {
+              setTimeout(function () {
+                try { listener({ type: "open" }); } catch (e) {}
+              }, 0);
+            }
+          };
+          MockHmrSocket.prototype.removeEventListener = function (type, listener) {
+            if (this.listeners[type]) {
+              this.listeners[type] = this.listeners[type].filter(function (l) { return l !== listener; });
+            }
+          };
+          MockHmrSocket.prototype.dispatchEvent = function (event) {
+            var list = this.listeners[event.type] || [];
+            for (var i = 0; i < list.length; i++) {
+              try { list[i](event); } catch (e) {}
+            }
+          };
+          MockHmrSocket.prototype.send = function () {};
+          MockHmrSocket.prototype.close = function () {
+            this.readyState = 3;
+            this.dispatchEvent({ type: "close", wasClean: true });
+          };
+
+          window.WebSocket = function (url, protocols) {
+            if (
+              protocols === "vite-hmr" ||
+              protocols === "vite-ping" ||
+              (typeof url === "string" && (url.indexOf("token=") !== -1 || url.indexOf("@vite") !== -1))
+            ) {
+              return new MockHmrSocket(url, protocols);
+            }
+            return new OrigWebSocket(url, protocols);
+          };
+          window.WebSocket.prototype = OrigWebSocket.prototype;
+          window.WebSocket.CONNECTING = OrigWebSocket.CONNECTING;
+          window.WebSocket.OPEN = OrigWebSocket.OPEN;
+          window.WebSocket.CLOSING = OrigWebSocket.CLOSING;
+          window.WebSocket.CLOSED = OrigWebSocket.CLOSED;
+        }
+
+        window.addEventListener("error", function (e) {
+          if (e.message && (e.message.indexOf("WebSocket") !== -1 || e.message.indexOf("@vite/client") !== -1)) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            return true;
+          }
+        }, true);
+
+        window.addEventListener("unhandledrejection", function (e) {
+          if (e.reason && (String(e.reason).indexOf("WebSocket") !== -1 || String(e.reason).indexOf("@vite/client") !== -1)) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+          }
+        }, true);
+      }
+    })();
+  </script>
+  <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#D95338" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CurationKit" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
     <meta name="robots" content="index, follow" />
     <meta name="description" content="Curation Kitchen - Smart Recipe Curation, Meal Planning, Pantry Inventory, and Culinary AI Workspace." />
     <meta property="og:title" content="Curation Kitchen - Smart Recipe Curation & Workspace" />

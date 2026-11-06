@@ -1,8 +1,8 @@
 # Privacy Policy for Curation Kitchen
 
-**Last Updated: July 19, 2026**
+**Last Updated: November 5, 2026**
 
-Curation Kitchen ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application, Curation Kitchen (the "Application"), in compliance with the Google Play Developer Program Policies, including the Data Safety requirements.
+Curation Kitchen ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application, Curation Kitchen (the "Application"), in compliance with the Google Play Developer Program Policies, including the Data Safety requirements and Sensitive Permissions standards.
 
 Please read this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, please do not access or use the Application.
 
@@ -17,10 +17,19 @@ To provide you with a seamless recipe management and meal planning experience, t
 *   **Pantry & Ingredient Lists:** The Application tracks your pantry ingredients and shopping lists. This data is stored locally on your device to ensure instant accessibility and offline usage.
 
 ### B. Financial & Transaction Data
-*   **Encrypted Billing Tokens:** To unlock premium features through our subscription tiers, all payments are processed securely by Google Play Billing. Curation Kitchen **does not** collect, store, or have access to your raw payment card information or bank account details. We receive and store only encrypted transaction tokens and purchase status indicators provided by Google Play to verify and activate your subscription status.
+*   **Encrypted Billing Tokens & Subscription Disclosures:** To unlock premium features through our subscription tiers, all payments within the Android application are processed securely by Google Play In-App Billing (or Stripe for web sessions). Curation Kitchen **does not** collect, store, or have access to your raw payment card information or bank account details.
+    *   **Auto-Renewal & Cancellation:** Subscriptions automatically renew at the disclosed monthly or annual frequency unless canceled by the user at least 24 hours prior to the end of the current billing cycle. You may cancel anytime via Google Play Subscriptions (on Android) or your account portal (on Web).
+    *   **Promotional & Discount Terms:** If you enroll under an ongoing eligibility-based or promotional discount (such as an introductory trial or student offer), the eligibility requirements, verification steps, and subsequent standard renewal pricing are explicitly disclosed prior to checkout.
 
 ### C. Device & Technical Information
 *   **App Performance Data:** We may collect anonymous crash logs, diagnostics, and application performance metrics to identify and fix technical bugs, ensuring a highly reliable service.
+
+### D. Approximate Location Data (Minimum Scope Compliance)
+*   **Store Proximity & Travel Expense Calculation:** The Application includes a Smart Store Finder feature that allows you to calculate approximate travel distance and estimated fuel costs to regional grocery stores.
+*   **Strict Scope Limits:** When you tap "Use My Location", the Application requests only one-time, approximate (coarse) location coordinates. Curation Kitchen **does not** track background location, does not collect fine GPS coordinates (`ACCESS_FINE_LOCATION`), does not store historical movement records, and never transmits or sells your location data to third parties.
+
+### E. Camera Stream & Optical Barcode Scanner
+*   **On-Device Real-Time Barcode Scanning:** When using the optical pantry barcode scanner, the camera permission is used strictly in real-time on-device to decode UPC barcodes and PLU produce labels. No photos, video feeds, or biometric images are ever recorded, saved to storage, or transmitted off your device.
 
 ---
 

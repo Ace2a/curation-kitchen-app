@@ -21,6 +21,9 @@ import { LocalSearchIndex } from "../../lib/searchIndex";
 import { ProStatusBadge } from "../subscription/ProStatusBadge";
 import { UpgradeFlowModal } from "../subscription/UpgradeFlowModal";
 import { useSubscriptionSync } from "../../hooks/useSubscriptionSync";
+import { PWAInstallButton } from "../pwa/PWAInstallButton";
+import { HelpGuideButton, HelpGuideModal } from "../help/HelpGuideModal";
+import { OnboardingModal } from "../onboarding/OnboardingModal";
 
 // Corporate Compliance Gate: Hide e-commerce routing panels & external cart buttons until partner agreements are approved
 export const IS_AFFILIATE_ENABLED = false;
@@ -152,6 +155,8 @@ export function RecipeDashboard() {
 
   // User Profile & Subscription Tier Hook with real-time polling and listener mechanisms
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
   const {
     subscription: userSub,
     isPremium,
@@ -559,8 +564,13 @@ export function RecipeDashboard() {
               {isOffline ? "OFFLINE" : "ONLINE"}
             </span>
 
-            {/* Dynamic Pro Status Badge */}
-            <ProStatusBadge onOpenUpgrade={() => setIsUpgradeModalOpen(true)} />
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <PWAInstallButton />
+              {/* Dynamic Pro Status Badge */}
+              <ProStatusBadge onOpenUpgrade={() => setIsUpgradeModalOpen(true)} />
+              {/* Help & Guides Button (strict 44px touch target) */}
+              <HelpGuideButton onClick={() => setIsHelpModalOpen(true)} />
+            </div>
           </div>
 
           {/* Centered App Logo & Title */}
@@ -760,7 +770,7 @@ export function RecipeDashboard() {
                 <span>Search Saved Recipes</span>
               </button>
 
-              {/* Toggle 2: Search Web */}
+              {/* Toggle 2: Recipe Web Search */}
               <button
                 type="button"
                 onClick={() => {
@@ -781,7 +791,7 @@ export function RecipeDashboard() {
                 }`}
               >
                 <Globe className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Search Web</span>
+                <span>Recipe Web Search</span>
               </button>
 
               {/* Toggle 3: AI Recipe Parser */}
@@ -1401,6 +1411,19 @@ export function RecipeDashboard() {
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
         currentTier={userSub?.subscription_tier || (userSub?.is_premium ? "premium" : "free")}
+      />
+
+      {/* HELP & USER GUIDES MODAL */}
+      <HelpGuideModal
+        isOpen={isHelpModalOpen}
+        onClose={() => setIsHelpModalOpen(false)}
+        onLaunchWalkthrough={() => setIsOnboardingModalOpen(true)}
+      />
+
+      {/* INTERACTIVE ONBOARDING WALKTHROUGH */}
+      <OnboardingModal
+        isOpen={isOnboardingModalOpen}
+        onClose={() => setIsOnboardingModalOpen(false)}
       />
     </div>
   );

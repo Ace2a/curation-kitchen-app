@@ -237,8 +237,8 @@ export function UpgradeFlowModal({
                 <span className="text-2xl sm:text-3xl font-black font-serif text-amber-300">$4.99</span>
                 <span className="text-xs text-stone-300 font-medium">/ month</span>
               </div>
-              <p className="text-[10px] text-stone-400 mt-0.5">
-                Renews monthly • Cancel anytime securely via Stripe
+              <p className="text-[10px] text-stone-300 mt-1 leading-snug">
+                Auto-renews monthly at $4.99/mo until cancelled. Cancel anytime with 1-click in account settings with zero cancellation fees.
               </p>
             </div>
             <div className="text-right">

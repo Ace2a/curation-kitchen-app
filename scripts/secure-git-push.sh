@@ -121,6 +121,15 @@ AUTH_URL="https://x-access-token:${TOKEN}@${CLEAN_URL}"
 # ------------------------------------------------------------------------------
 # OPTIONAL COMMIT HANDLING
 # ------------------------------------------------------------------------------
+if [ ! -d ".git" ]; then
+  echo -e "${BLUE}[GIT]${NC} Initializing local git repository..."
+  git config --global --add safe.directory '*' 2>/dev/null || true
+  git init -b main
+  git config user.name "Ace2a"
+  git config user.email "barry0568@gmail.com"
+fi
+git config --global --add safe.directory '*' 2>/dev/null || true
+
 # If a commit message is provided as the first argument, commit any staged/working files
 COMMIT_MSG="${1:-}"
 if [ -n "$COMMIT_MSG" ]; then

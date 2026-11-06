@@ -23,3 +23,30 @@ html, body, #root {
   min-height: 100vh;
 }
 
+/* Ambient Workspace Theme: Global Butter-Cream into Desaturated Sage Green Backdrop */
+.app-shell-ambient {
+  background-color: #FAF6EE;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dark .app-shell-ambient,
+  :root.dark .app-shell-ambient {
+    background-color: #09090b;
+  }
+}
+
+/* Neutralize page-level opaque wrappers in secondary routes so global ambient gradient shines through */
+.app-shell-ambient .ambient-page-content div[class*="min-h-screen"],
+.app-shell-ambient .ambient-page-content [class*="min-h-screen"],
+.app-shell-ambient .ambient-page-content div#pantry-page-container,
+.app-shell-ambient .ambient-page-content div#categories-page-container,
+.app-shell-ambient .ambient-page-content div#recipe-form-page-container {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Neutralize fixed dark overlay on LocalSearchPage when rendered in ambient shell */
+.app-shell-ambient .ambient-page-content div > .bg-black\/45 {
+  display: none !important;
+}
+

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Google Play Compliant Android Manifest for Curation Kitchen
+  - Adheres strictly to the Minimum Scope Principle for permissions
+  - Enforces ACCESS_COARSE_LOCATION only (never ACCESS_FINE_LOCATION)
+  - Omits MANAGE_EXTERNAL_STORAGE, Local Network, and SMS/Call Log permissions
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.curationkitchen.app">
+
+    <!-- Essential Network Permission for Cloud Kitchen & Recipe Sync -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Google Play In-App Billing for compliant digital subscriptions -->
+    <uses-permission android:name="com.android.vending.BILLING" />
+
+    <!-- Real-time Optical Barcode & Produce PLU Scanner (Hardware camera optional for tablet compatibility) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <!-- 
+      GOOGLE PLAY LOCATION POLICY COMPLIANCE:
+      Strictly uses ACCESS_COARSE_LOCATION for approximate grocery store distance.
+      Does NOT request ACCESS_FINE_LOCATION or ACCESS_BACKGROUND_LOCATION.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Curation Kitchen"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.CurationKitchen">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.CurationKitchen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+</manifest>

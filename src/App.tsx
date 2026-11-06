@@ -11,6 +11,7 @@ import Collections from "./components/collections/Collections";
 import RecipeDetails from "./components/recipes/RecipeDetails";
 import FavoritesPage from "./components/recipes/FavoritesPage";
 import OfflineIndicator from "./components/ui/OfflineIndicator";
+import { PWAInstallBanner } from "./components/pwa/PWAInstallBanner";
 import { PantryModal } from "./components/pantry/PantryModal";
 import { PantryHub } from "./components/pantry/PantryHub";
 import { MealPlanner } from "./components/planner/MealPlanner";
@@ -19,6 +20,7 @@ import RecipeFormModal from "./components/recipes/RecipeFormModal";
 import LocalSearchPage from "./components/recipes/LocalSearchPage";
 import NutritionPage from "./components/recipes/NutritionPage";
 import { OnboardingModal } from "./components/onboarding/OnboardingModal";
+import { AppLayoutWrapper } from "./components/layout/AppLayoutWrapper";
 import { recipeClient } from "./api/recipeClient";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 
@@ -156,23 +158,27 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<RecipeDashboard />} />
-            <Route path="/collections" element={<Collections />} />
-            <Route path="/favorites" element={<FavoritesPage />} />
-            <Route path="/recipes/:id" element={<RecipeDetails />} />
-            <Route path="/pantry" element={<PantryPage />} />
-            <Route path="/pantry/upc" element={<UpcScannerPage />} />
-            <Route path="/upc-scanner" element={<UpcScannerPage />} />
-            <Route path="/planner" element={<PlannerPage />} />
-            <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/recipes/new" element={<NewRecipePage />} />
-            <Route path="/recipes/edit/:id" element={<EditRecipePage />} />
-            <Route path="/local-search" element={<LocalSearchPage />} />
-            <Route path="/nutrition" element={<NutritionPage />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+          <AppLayoutWrapper>
+            <Routes>
+              <Route path="/" element={<RecipeDashboard />} />
+              <Route path="/collections" element={<Collections />} />
+              <Route path="/favorites" element={<FavoritesPage />} />
+              <Route path="/recipes/:id" element={<RecipeDetails />} />
+              <Route path="/pantry" element={<PantryPage />} />
+              <Route path="/pantry/upc" element={<UpcScannerPage />} />
+              <Route path="/upc-scanner" element={<UpcScannerPage />} />
+              <Route path="/planner" element={<PlannerPage />} />
+              <Route path="/categories" element={<CategoriesPage />} />
+              <Route path="/recipes/new" element={<NewRecipePage />} />
+              <Route path="/recipes/edit/:id" element={<EditRecipePage />} />
+              <Route path="/local-search" element={<LocalSearchPage />} />
+              <Route path="/nutrition" element={<NutritionPage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </AppLayoutWrapper>
+          <PWAInstallBanner />
+          <OfflineIndicator />
         </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>

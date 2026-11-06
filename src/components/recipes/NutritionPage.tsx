@@ -384,28 +384,17 @@ export default function NutritionPage() {
   const sodiumInfo = getPercentageInfo(totals.sodium, targets.sodium, true);
 
   return (
-    <div className="min-h-screen w-full relative text-zinc-900 flex flex-col font-sans selection:bg-[#D95338]/30 overflow-x-hidden">
-      {/* Full-Screen Dark Culinary Wallpaper Layer */}
-      <div className="fixed inset-0 z-0 w-full h-full pointer-events-none overflow-hidden bg-zinc-950">
-        <img
-          src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=2000&q=80"
-          alt="Culinary Inspiration Hub Full-Screen Wallpaper"
-          className="w-full h-full object-cover object-center transform scale-100"
-          referrerPolicy="no-referrer"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/75 to-black/90 backdrop-blur-[3px]" />
-      </div>
-
-      {/* Top Bar Navigation (Dark Glassmorphism) */}
-      <header className="sticky top-0 z-40 bg-black/45 backdrop-blur-xl border-b border-white/15 px-3.5 sm:px-6 py-2.5 shadow-xl text-white">
+    <div className="min-h-screen w-full relative text-zinc-900 dark:text-zinc-100 flex flex-col font-sans selection:bg-[#D95338]/30 overflow-x-hidden">
+      {/* Top Bar Navigation (Butter-cream Glassmorphism) */}
+      <header className="sticky top-0 z-40 bg-[#FAF6EE]/90 dark:bg-zinc-900/90 backdrop-blur-xl border-b border-[#E7E2D8] dark:border-zinc-800 px-3.5 sm:px-6 py-2.5 shadow-xs text-zinc-900 dark:text-zinc-100">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           {/* Left: Home Button */}
           <Link to="/">
             <button
-              className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-white bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-xl transition-all shadow-sm cursor-pointer select-none"
+              className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 hover:bg-[#E7E2D8] dark:hover:bg-zinc-700 border border-[#E7E2D8] dark:border-zinc-700 px-3 py-1.5 rounded-xl transition-all shadow-xs cursor-pointer select-none"
               id="back-home-btn"
             >
-              <Home className="w-3.5 h-3.5 text-white/80" />
+              <Home className="w-3.5 h-3.5 text-zinc-500" />
               <span>Dashboard</span>
             </button>
           </Link>
@@ -413,7 +402,7 @@ export default function NutritionPage() {
           {/* Center: Title */}
           <div className="flex items-center gap-2">
             <span className="text-base">🥗</span>
-            <h1 className="font-serif text-sm sm:text-base font-extrabold tracking-wide text-white">
+            <h1 className="font-serif text-sm sm:text-base font-extrabold tracking-wide text-zinc-900 dark:text-white">
               Nutrition Tracker
             </h1>
           </div>
@@ -422,7 +411,7 @@ export default function NutritionPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowResetDialog(true)}
-              className="px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-[#D95338] bg-[#D95338]/15 hover:bg-[#D95338]/25 border border-[#D95338]/40 rounded-xl transition-all cursor-pointer"
+              className="px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-[#D95338] bg-[#D95338]/10 hover:bg-[#D95338]/20 border border-[#D95338]/30 rounded-xl transition-all cursor-pointer"
               id="goals-settings-btn"
               title="Reset Today's Logs"
             >

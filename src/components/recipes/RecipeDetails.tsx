@@ -685,7 +685,7 @@ export default function RecipeDetails() {
             <Link to="/">
               <Button variant="outline" size="sm" className="gap-1.5 rounded-full border-[#E6DFC6] dark:border-zinc-800 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-zinc-900 cursor-pointer min-h-[38px]">
                 <Home className="w-3.5 h-3.5 text-[#6E8B6B]" />
-                <span>Workspace</span>
+                <span>Home</span>
               </Button>
             </Link>
 
