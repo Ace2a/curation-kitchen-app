@@ -224,4 +224,19 @@ export interface NutritionLog {
   created_date: string;
 }
 
+export interface UserSubscription {
+  user_id: string;
+  subscription_tier: "free" | "premium" | string;
+  is_premium: boolean;
+  hasMacroAddon: boolean;
+  has_macro_addon?: boolean;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  limits?: {
+    recipes: { limit: number; current: number; unlimited: boolean; capped: boolean };
+    pantry: { limit: number; current: number; unlimited: boolean; capped: boolean };
+    meal_plans: { limit: number; unlimited: boolean };
+  };
+}
+
 

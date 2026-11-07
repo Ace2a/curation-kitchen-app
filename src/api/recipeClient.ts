@@ -763,17 +763,33 @@ export const recipeClient = {
         };
       }
     },
-    createCheckoutSession: async (userId: string = "default_user", email?: string) => {
+    createCheckoutSession: async (userId: string = "default_user", email?: string, addon?: "pro" | "macro") => {
       const res = await fetch("/api/payments/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, email }),
+        body: JSON.stringify({ userId, email, addon, tier: addon }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || "Failed to create checkout session");
       }
       return res.json();
+    },
+    setSimulatedAddon: async (active: boolean = true, userId: string = "default_user") => {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("kitchen_has_macro_addon", active ? "true" : "false");
+      }
+      try {
+        const res = await fetch("/api/user/subscription/addon", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, hasMacroAddon: active }),
+        });
+        if (res.ok) return await res.json();
+      } catch (e) {
+        console.warn("Backend addon sync skipped:", e);
+      }
+      return { success: true, hasMacroAddon: active };
     },
     setSimulatedTier: async (tier: "free" | "premium", userId: string = "default_user") => {
       if (typeof window !== "undefined") {

@@ -11,7 +11,7 @@ import {
   FolderKanban, Layers, Sparkles, Barcode, 
   Globe, Loader2, CheckCircle2, Clock, Users, 
   ArrowRight, Utensils, ChefHat, X, Search,
-  Coffee, Cookie, Cake, Plus, ExternalLink, Database, Check, Crown
+  Coffee, Cookie, Cake, Plus, ExternalLink, Database, Check, Crown, Zap, Lock
 } from "lucide-react";
 import { KitchenLogo } from "../ui/KitchenLogo";
 import { recipeClient } from "../../api/recipeClient";
@@ -155,11 +155,15 @@ export function RecipeDashboard() {
 
   // User Profile & Subscription Tier Hook with real-time polling and listener mechanisms
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [upgradeAddonMode, setUpgradeAddonMode] = useState<"pro" | "macro">("pro");
+  const [activeWorkspaceView, setActiveWorkspaceView] = useState<"recipe" | "macro">("recipe");
+  const [showAllRecipes, setShowAllRecipes] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
   const {
     subscription: userSub,
     isPremium,
+    hasMacroAddon,
     isPollingActive,
     showUpgradeCelebration,
     dismissCelebration,
@@ -170,14 +174,15 @@ export function RecipeDashboard() {
     return new LocalSearchIndex(queryRecipes);
   }, [queryRecipes]);
 
-  // Is user actively searching or filtering by category?
+  // Is user actively searching or filtering by category or viewing recipes?
   const hasActiveQuery = savedSearchQuery.trim().length > 0;
   const hasActiveCategory = selectedMealCategory !== null;
   const isFilteringActive = hasActiveQuery || hasActiveCategory;
+  const isRecipeViewVisible = isFilteringActive || showAllRecipes;
 
-  // Filtered saved recipes: ONLY computed and displayed when user actively searches or clicks a category!
+  // Filtered saved recipes: computed and displayed when user searches, clicks a category, or views recipes
   const filteredSavedRecipes = useMemo(() => {
-    if (!isFilteringActive) return [];
+    if (!isRecipeViewVisible) return [];
 
     let baseList = queryRecipes;
 
@@ -204,7 +209,7 @@ export function RecipeDashboard() {
       });
     }
     return indexed;
-  }, [queryRecipes, searchIndex, savedSearchQuery, selectedMealCategory, isFilteringActive, hasActiveQuery]);
+  }, [queryRecipes, searchIndex, savedSearchQuery, selectedMealCategory, isRecipeViewVisible, hasActiveQuery]);
 
   // Handle clicking a category block: toggles filter and ensures saved mode
   const handleCategoryClick = (categoryName: string) => {
@@ -554,44 +559,49 @@ export function RecipeDashboard() {
       {/* 2. MAIN CONTENT CONTAINER */}
       <main className="relative z-10 w-full max-w-xl sm:max-w-2xl mx-auto px-3.5 sm:px-4 py-4 sm:py-6 flex-1 flex flex-col justify-start gap-4">
         
-        {/* BRANDING HEADER */}
-        <header className="w-full p-4 sm:p-5 rounded-2xl bg-black/55 backdrop-blur-xl border border-white/20 shadow-xl text-white flex flex-col items-center justify-center text-center relative">
+        {/* UNIFIED BRAND TITLE & UTILITY AREA (No background box container, renders directly over ambient backdrop) */}
+        <header className="w-full flex flex-col items-center justify-center text-white py-1 relative select-none space-y-2.5">
           
           {/* Top Utility Row */}
-          <div className="w-full flex items-center justify-between mb-2 text-[10px]">
-            <span className="inline-flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/20 bg-black/50 text-emerald-300 backdrop-blur-md">
+          <div className="w-full flex items-center justify-between text-[10px]">
+            {/* ONLINE / OFFLINE Status Indicator */}
+            <span className="inline-flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-xl border border-white/15 bg-black/40 text-emerald-300 backdrop-blur-md min-h-[44px] shrink-0">
               <span className={`w-1.5 h-1.5 rounded-full ${isOffline ? "bg-amber-400" : "bg-emerald-400 animate-pulse"}`} />
               {isOffline ? "OFFLINE" : "ONLINE"}
             </span>
 
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Right: Consolidated Utility Elements (PWA, Plan Badge, Guides) */}
+            <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0 flex-wrap sm:flex-nowrap">
               <PWAInstallButton />
-              {/* Dynamic Pro Status Badge */}
               <ProStatusBadge onOpenUpgrade={() => setIsUpgradeModalOpen(true)} />
-              {/* Help & Guides Button (strict 44px touch target) */}
               <HelpGuideButton onClick={() => setIsHelpModalOpen(true)} />
             </div>
           </div>
 
-          {/* Centered App Logo & Title */}
+          {/* Centered App Logo & Title with Subtitle Centered Below */}
           <div className="flex flex-col items-center justify-center text-center">
-            <div className="relative mb-2">
-              <div className="relative flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-[#D95338] via-orange-500 to-amber-500 shadow-lg ring-2 ring-white/30 overflow-hidden transform hover:scale-105 transition-transform duration-300">
-                <div className="absolute inset-0.5 rounded-full border border-dashed border-white/35" />
-                <KitchenLogo className="w-6 h-6 sm:w-7 sm:h-7 text-white z-30" plateColor="white" letterColor="white" />
+            <div className="inline-flex items-center justify-center gap-2.5 sm:gap-3">
+              <div className="relative shrink-0">
+                <div className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-[#D95338] via-orange-500 to-amber-500 shadow-md ring-2 ring-white/30 overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                  <div className="absolute inset-0.5 rounded-full border border-dashed border-white/35" />
+                  <KitchenLogo className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white z-30" plateColor="white" letterColor="white" />
+                </div>
+                <div className="absolute -top-1 -right-1 z-40 pointer-events-none flex items-center justify-center">
+                  <Sparkles className="w-2.5 h-2.5 text-yellow-300 fill-yellow-200 drop-shadow-[0_0_4px_rgba(253,224,71,1)]" />
+                </div>
               </div>
-              <div className="absolute -top-1 -right-1 z-40 pointer-events-none flex items-center justify-center">
-                <Sparkles className="w-3.5 h-3.5 text-yellow-300 fill-yellow-200 drop-shadow-[0_0_4px_rgba(253,224,71,1)]" />
-              </div>
+              
+              <h1 className="text-xl sm:text-2xl font-serif font-extrabold tracking-tight text-white drop-shadow-md">
+                Curation Kitchen
+              </h1>
             </div>
-            
-            <h1 className="text-xl sm:text-2xl font-serif font-extrabold tracking-tight text-white drop-shadow-md text-center">
-              Curation Kitchen
-            </h1>
-            <p className="text-xs sm:text-[13px] font-medium text-amber-300/90 leading-normal tracking-wide text-center mt-0.5">
+
+            {/* Subtitle placed below the main app name and centered */}
+            <p className="text-xs sm:text-[13px] font-medium text-amber-300/90 leading-normal tracking-wide text-center mt-1">
               The Smart Digital Culinary Assistant
             </p>
           </div>
+
         </header>
 
         {/* 1. PRO UPGRADE CELEBRATION TOAST / BANNER */}
@@ -631,33 +641,108 @@ export function RecipeDashboard() {
           </div>
         )}
 
-        {/* 3. FREE TIER PRO UPGRADE TEASER BANNER */}
-        {userSub && !userSub.is_premium && !isPollingActive && (
-          <div 
-            onClick={() => setIsUpgradeModalOpen(true)}
-            className="w-full p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-500/10 hover:from-amber-500/25 hover:via-orange-500/20 hover:to-amber-500/15 border border-amber-400/40 hover:border-amber-400/70 backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-stone-200 cursor-pointer transition-all hover:scale-[1.005] group shadow-xl"
-          >
-            <div className="flex items-start sm:items-center gap-2.5 min-w-0 w-full sm:w-auto">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500/30 to-orange-500/30 border border-amber-400/50 flex items-center justify-center shrink-0 text-amber-300 group-hover:scale-105 transition-transform shadow-xs mt-0.5 sm:mt-0">
-                <Crown className="w-4 h-4 text-amber-300 drop-shadow-[0_0_4px_rgba(251,191,36,0.8)]" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-black text-white text-xs tracking-tight">Unlock Unlimited Pro Access</span>
-                  <span className="text-[9.5px] text-amber-300 font-extrabold px-1.5 py-0.2 rounded-full bg-amber-500/25 border border-amber-400/40">
-                    $4.99/mo
-                  </span>
-                </div>
-                <p className="text-[10.5px] text-stone-300 leading-normal mt-0.5">
-                  Unlimited recipes, infinite pantry hub &amp; multi-week AI meal planner.
-                </p>
-              </div>
+        {/* 3. COMPACT REFINED WORKSPACE ACCESS BANNER */}
+        {(!isPremium || !hasMacroAddon) && !isPollingActive && (
+          <div className="w-full max-w-3xl mx-auto p-2.5 sm:p-3 rounded-2xl bg-black/45 backdrop-blur-xl border border-white/15 flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 text-xs text-stone-200 shadow-lg">
+            {/* Far LEFT: Clean, uniform brand text with no truncation */}
+            <div className="flex items-center gap-1.5 pl-1 shrink-0 w-full sm:w-auto justify-center sm:justify-start">
+              <span className="font-bold text-white text-xs sm:text-sm tracking-tight flex items-center gap-1.5 whitespace-nowrap">
+                <span>👑</span>
+                <span>Customize Your Workspace Access</span>
+              </span>
             </div>
-            <span className="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-[#D95338] text-white text-xs font-black uppercase tracking-wider shrink-0 flex items-center justify-center gap-1.5 group-hover:brightness-110 shadow-sm transition-all text-center">
-              <span>Upgrade</span> <ArrowRight className="w-3 h-3" />
-            </span>
+
+            {/* Far RIGHT: Two separate, smaller, touch-friendly buttons side-by-side */}
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-center sm:justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setUpgradeAddonMode("pro");
+                  setIsUpgradeModalOpen(true);
+                }}
+                className={`min-h-[44px] px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shadow-xs active:scale-[0.98] ${
+                  isPremium
+                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                    : "bg-gradient-to-r from-amber-500 via-orange-500 to-[#D95338] hover:from-amber-400 hover:to-[#c24127] text-white"
+                }`}
+                title="Pro Chef ($4.99/mo) Subscription"
+              >
+                <span>🍳</span>
+                <span>{isPremium ? "Pro Chef Active" : "Pro Chef ($4.99/mo)"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setUpgradeAddonMode("macro");
+                  setIsUpgradeModalOpen(true);
+                }}
+                className={`min-h-[44px] px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shadow-xs active:scale-[0.98] ${
+                  hasMacroAddon
+                    ? "bg-purple-500/25 text-purple-200 border border-purple-400/50"
+                    : "bg-purple-900/40 hover:bg-purple-800/50 border border-purple-400/40 text-purple-200 hover:text-white"
+                }`}
+                title="Macro-Target (+$5.00/mo) Fitness Workspace Add-on"
+              >
+                <span>📊</span>
+                <span>{hasMacroAddon ? "Macro Active" : "Macro-Target (+$5.00/mo)"}</span>
+              </button>
+            </div>
           </div>
         )}
+
+        {/* WORKSPACE VIEW TOGGLES (DIRECTLY BENEATH BANNER, ABOVE SEARCH) */}
+        <div className="w-full max-w-3xl mx-auto flex items-center p-1 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 gap-1.5 shadow-md">
+          {/* Toggle 1: Recipe & Meal View (Activates and displays recipes & meals) */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveWorkspaceView("recipe");
+              setShowAllRecipes(true);
+              setSearchMode("saved");
+              setTimeout(() => {
+                const el = document.getElementById("recipes-view-section") || document.getElementById("unified-search-import-area");
+                el?.scrollIntoView({ behavior: "smooth" });
+              }, 60);
+            }}
+            className={`flex-1 min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+              activeWorkspaceView === "recipe"
+                ? "bg-amber-500/25 text-amber-300 border border-amber-400/50 shadow-xs"
+                : "text-stone-300 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            <span>🍳</span>
+            <span>Recipe &amp; Meal View</span>
+          </button>
+
+          {/* Toggle 2: Macro-Target View (Locked if hasMacroAddon is false) */}
+          <button
+            type="button"
+            onClick={() => {
+              if (!hasMacroAddon) {
+                setUpgradeAddonMode("macro");
+                setIsUpgradeModalOpen(true);
+              } else {
+                setActiveWorkspaceView("macro");
+                navigate("/nutrition");
+              }
+            }}
+            className={`flex-1 min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+              activeWorkspaceView === "macro" && hasMacroAddon
+                ? "bg-purple-600/30 text-purple-200 border border-purple-400/50 shadow-xs"
+                : "text-stone-300 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            <span>📊</span>
+            <span>Macro-Target View</span>
+            {!hasMacroAddon && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-400/90 bg-amber-500/15 border border-amber-400/30 px-1.5 py-0.5 rounded-full ml-1">
+                <Lock className="w-3 h-3 text-amber-400" />
+                <span className="hidden sm:inline">Add-on</span>
+              </span>
+            )}
+          </button>
+        </div>
 
         {/* =================================================================== */}
         {/* 3. ACCENTED, ELEGANT UNIFIED SEARCH BAR                             */}
@@ -808,6 +893,17 @@ export function RecipeDashboard() {
               >
                 <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
                 <span>AI Recipe Parser</span>
+              </button>
+
+              {/* Toggle 4: Nutrition & Macros (Relocated to primary search area) */}
+              <button
+                type="button"
+                onClick={() => navigate("/nutrition")}
+                className="py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 flex-1 sm:flex-initial min-h-[44px] bg-white/5 hover:bg-purple-500/20 text-stone-300 hover:text-purple-200 border border-white/10 hover:border-purple-400/40 shadow-xs"
+                title="Open Nutrition Tracker & Macros Hub"
+              >
+                <Activity className="w-3.5 h-3.5 text-purple-400" />
+                <span>Nutrition &amp; Macros</span>
               </button>
             </div>
 
@@ -1127,11 +1223,10 @@ export function RecipeDashboard() {
         </section>
 
         {/* =================================================================== */}
-        {/* 5. SEARCH & CATEGORY FILTER RESULTS (ONLY SHOWN WHEN FILTERING)    */}
-        {/* Completely hidden on default load; appears ONLY when active query   */}
+        {/* 5. SEARCH & CATEGORY FILTER RESULTS (SHOWN ON SEARCH OR VIEW)       */}
         {/* =================================================================== */}
-        {isFilteringActive && (
-          <section className="w-full bg-black/60 backdrop-blur-2xl border border-white/20 rounded-2xl p-3.5 sm:p-4 shadow-2xl text-white space-y-3 animate-in fade-in duration-200">
+        {isRecipeViewVisible && (
+          <section id="recipes-view-section" className="w-full bg-black/60 backdrop-blur-2xl border border-white/20 rounded-2xl p-3.5 sm:p-4 shadow-2xl text-white space-y-3 animate-in fade-in duration-200">
             <div className="flex items-center justify-between text-xs text-stone-300">
               <span className="font-bold flex items-center gap-1.5 text-amber-300">
                 <Search className="w-3.5 h-3.5 text-amber-400" />
@@ -1140,15 +1235,18 @@ export function RecipeDashboard() {
                     ? selectedMealCategory 
                     : hasActiveQuery 
                     ? `Results for "${savedSearchQuery}"` 
-                    : "Search Results"}
+                    : `All Recipes & Meals (${queryRecipes.length})`}
                 </span>
               </span>
               <button
                 type="button"
-                onClick={handleClearFilters}
+                onClick={() => {
+                  handleClearFilters();
+                  setShowAllRecipes(false);
+                }}
                 className="text-[11px] text-amber-300 hover:underline font-bold cursor-pointer"
               >
-                Clear Search
+                {isFilteringActive ? "Clear Search" : "Hide Recipes"}
               </button>
             </div>
 
@@ -1166,8 +1264,9 @@ export function RecipeDashboard() {
             ) : (
               <div className="p-6 rounded-xl bg-black/40 border border-white/10 text-center space-y-3">
                 <p className="text-xs text-stone-300">
-                  No saved recipes found {hasActiveQuery && `matching "${savedSearchQuery}"`}
-                  {selectedMealCategory && ` in ${selectedMealCategory}`}.
+                  {hasActiveQuery || selectedMealCategory
+                    ? `No saved recipes found ${hasActiveQuery ? `matching "${savedSearchQuery}"` : ""}${selectedMealCategory ? ` in ${selectedMealCategory}` : ""}.`
+                    : "No saved recipes found in your collection yet. Use the search bar above or AI parser to import recipes!"}
                 </p>
                 {hasActiveQuery && (
                   <button
@@ -1366,32 +1465,19 @@ export function RecipeDashboard() {
           </div>
         </section>
 
-        {/* 7. SECONDARY COMPACT ACCESS ROW (Favorites & Nutrition) */}
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 w-full">
+        {/* 7. SECONDARY COMPACT ACCESS ROW (Saved Favorites) */}
+        <div className="w-full">
           <button
             onClick={() => navigate("/favorites")}
-            className="group flex items-center justify-between px-3.5 py-2 rounded-xl bg-black/50 hover:bg-black/70 border border-white/15 hover:border-rose-400/50 text-stone-200 text-xs font-bold backdrop-blur-xl transition-all hover:-translate-y-0.5 cursor-pointer shadow-md"
+            className="w-full group flex items-center justify-between px-4 py-2.5 rounded-xl bg-black/50 hover:bg-black/70 border border-white/15 hover:border-rose-400/50 text-stone-200 text-xs font-bold backdrop-blur-xl transition-all hover:-translate-y-0.5 cursor-pointer shadow-md min-h-[44px]"
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 rounded-md bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 group-hover:scale-105 transition-transform shrink-0">
-                <Heart className="w-3.5 h-3.5 fill-rose-400/30" />
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 group-hover:scale-105 transition-transform shrink-0">
+                <Heart className="w-4 h-4 fill-rose-400/30" />
               </div>
-              <span className="truncate">Saved Favorites</span>
+              <span className="truncate font-bold">Saved Favorites</span>
             </div>
-            <ArrowRight className="w-3 h-3 text-stone-400 group-hover:text-rose-300 group-hover:translate-x-0.5 transition-all shrink-0" />
-          </button>
-
-          <button
-            onClick={() => navigate("/nutrition")}
-            className="group flex items-center justify-between px-3.5 py-2 rounded-xl bg-black/50 hover:bg-black/70 border border-white/15 hover:border-purple-400/50 text-stone-200 text-xs font-bold backdrop-blur-xl transition-all hover:-translate-y-0.5 cursor-pointer shadow-md"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 rounded-md bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform shrink-0">
-                <Activity className="w-3.5 h-3.5" />
-              </div>
-              <span className="truncate">Nutrition &amp; Macros</span>
-            </div>
-            <ArrowRight className="w-3 h-3 text-stone-400 group-hover:text-purple-300 group-hover:translate-x-0.5 transition-all shrink-0" />
+            <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-rose-300 group-hover:translate-x-0.5 transition-all shrink-0" />
           </button>
         </div>
 
@@ -1411,6 +1497,8 @@ export function RecipeDashboard() {
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
         currentTier={userSub?.subscription_tier || (userSub?.is_premium ? "premium" : "free")}
+        hasMacroAddon={hasMacroAddon}
+        targetAddon={upgradeAddonMode}
       />
 
       {/* HELP & USER GUIDES MODAL */}

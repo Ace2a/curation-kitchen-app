@@ -95,6 +95,8 @@ export default function NutritionPage() {
   // Recipe selection state
   const [selectedRecipeId, setSelectedRecipeId] = useState("");
   const [recipeServings, setRecipeServings] = useState("1");
+  const [servingScale, setServingScale] = useState(1);
+  const [isWorkoutMode, setIsWorkoutMode] = useState(false);
   const [isEstimating, setIsEstimating] = useState<string | null>(null);
 
   // Load Queries
@@ -130,6 +132,8 @@ export default function NutritionPage() {
       // Reset forms
       setCustomName("");
       setSelectedRecipeId("");
+      setRecipeServings("1");
+      setServingScale(1);
     }
   });
 
@@ -377,11 +381,22 @@ export default function NutritionPage() {
     return { pct, color, textClass, badgeClass, isExceeded };
   };
 
-  const calorieInfo = getPercentageInfo(totals.calories, targets.calories, true);
-  const proteinInfo = getPercentageInfo(totals.protein, targets.protein, false);
-  const carbsInfo = getPercentageInfo(totals.carbs, targets.carbs, false);
-  const fatInfo = getPercentageInfo(totals.fat, targets.fat, false);
-  const sodiumInfo = getPercentageInfo(totals.sodium, targets.sodium, true);
+  // Workout Performance Targets Override
+  const effectiveTargets = useMemo(() => {
+    if (isWorkoutMode) {
+      return {
+        ...targets,
+        protein: Math.max(targets.protein, 150)
+      };
+    }
+    return targets;
+  }, [targets, isWorkoutMode]);
+
+  const calorieInfo = getPercentageInfo(totals.calories, effectiveTargets.calories, true);
+  const proteinInfo = getPercentageInfo(totals.protein, effectiveTargets.protein, false);
+  const carbsInfo = getPercentageInfo(totals.carbs, effectiveTargets.carbs, false);
+  const fatInfo = getPercentageInfo(totals.fat, effectiveTargets.fat, false);
+  const sodiumInfo = getPercentageInfo(totals.sodium, effectiveTargets.sodium, true);
 
   return (
     <div className="min-h-screen w-full relative text-zinc-900 dark:text-zinc-100 flex flex-col font-sans selection:bg-[#D95338]/30 overflow-x-hidden">
@@ -711,23 +726,53 @@ export default function NutritionPage() {
             </div>
           </div>
 
-          {/* NUTRIENTS BREAKDOWN (HEALTH CANADA BASELINE) */}
+          {/* NUTRIENTS BREAKDOWN (HEALTH CANADA BASELINE / WORKOUT TARGETS) */}
           <div className="bg-[#FAF6EE] text-zinc-900 border border-[#FAF6EE]/80 rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3">
-            <div className="flex items-center justify-between border-b border-stone-200/80 pb-2.5">
-              <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Health Canada Baseline (Daily DRI)</span>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-200/80 pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">
+                  {isWorkoutMode ? "Workout Performance Target" : "Health Canada Baseline (Daily DRI)"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsWorkoutMode(!isWorkoutMode)}
+                  className={`min-h-[44px] px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border cursor-pointer select-none transition-all flex items-center gap-1.5 ${
+                    isWorkoutMode
+                      ? "bg-[#D95338] hover:bg-[#C24127] text-white border-[#D95338] shadow-xs"
+                      : "bg-[#D95338]/10 hover:bg-[#D95338]/20 text-[#D95338] border-[#D95338]/30"
+                  }`}
+                  aria-pressed={isWorkoutMode}
+                  title="Toggle Workout Training Mode"
+                >
+                  <span>[🏋️ Workout Mode]</span>
+                  <span className={`text-[8.5px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider ${
+                    isWorkoutMode ? "bg-white/20 text-white" : "bg-[#D95338]/20 text-[#D95338]"
+                  }`}>
+                    {isWorkoutMode ? "Active" : "Standard"}
+                  </span>
+                </button>
+              </div>
+
               <span className="text-[9px] font-bold text-stone-500 bg-stone-200/60 px-2 py-0.5 rounded-md">
-                Adult Reference
+                {isWorkoutMode ? "150g Pro Target" : "Adult Reference"}
               </span>
             </div>
 
             <div className="space-y-3 my-auto">
               
-              {/* Protein: 56g target */}
+              {/* Protein: Dynamic Baseline (56g DRI vs 150g Training Target) */}
               <div className="space-y-1">
                 <div className="flex justify-between items-center text-xs font-bold text-zinc-800 leading-tight">
-                  <span className="flex items-center gap-1.5">🍗 Protein Target</span>
+                  <span className="flex items-center gap-1.5">
+                    🍗 Protein Target
+                    {isWorkoutMode && (
+                      <span className="text-[9px] font-black uppercase tracking-wider text-[#D95338] bg-[#D95338]/10 px-1.5 py-0.5 rounded-sm">
+                        Workout
+                      </span>
+                    )}
+                  </span>
                   <div className="flex items-center gap-1.5">
-                    <span>{totals.protein}g <span className="text-stone-400 font-normal">/ {targets.protein}g</span></span>
+                    <span>{totals.protein}g <span className="text-stone-400 font-normal">/ {effectiveTargets.protein}g</span></span>
                     <span className={`text-[10px] font-black ${proteinInfo.textClass}`}>({proteinInfo.pct}%)</span>
                   </div>
                 </div>
@@ -744,7 +789,7 @@ export default function NutritionPage() {
                 <div className="flex justify-between items-center text-xs font-bold text-zinc-800 leading-tight">
                   <span className="flex items-center gap-1.5">🍞 Carbs Target</span>
                   <div className="flex items-center gap-1.5">
-                    <span>{totals.carbs}g <span className="text-stone-400 font-normal">/ {targets.carbs}g</span></span>
+                    <span>{totals.carbs}g <span className="text-stone-400 font-normal">/ {effectiveTargets.carbs}g</span></span>
                     <span className="text-[10px] font-black text-stone-600">({carbsInfo.pct}%)</span>
                   </div>
                 </div>
@@ -761,7 +806,7 @@ export default function NutritionPage() {
                 <div className="flex justify-between items-center text-xs font-bold text-zinc-800 leading-tight">
                   <span className="flex items-center gap-1.5">🥑 Fat Target</span>
                   <div className="flex items-center gap-1.5">
-                    <span>{totals.fat}g <span className="text-stone-400 font-normal">/ {targets.fat}g</span></span>
+                    <span>{totals.fat}g <span className="text-stone-400 font-normal">/ {effectiveTargets.fat}g</span></span>
                     <span className="text-[10px] font-black text-stone-600">({fatInfo.pct}%)</span>
                   </div>
                 </div>
@@ -778,8 +823,8 @@ export default function NutritionPage() {
                 <div className="flex justify-between items-center text-xs font-bold text-zinc-800 leading-tight">
                   <span className="flex items-center gap-1.5">🧂 Sodium Limit</span>
                   <div className="flex items-center gap-1.5">
-                    <span className={totals.sodium > targets.sodium ? "text-[#D95338] font-black" : ""}>
-                      {totals.sodium}mg <span className="text-stone-400 font-normal">/ {targets.sodium}mg</span>
+                    <span className={totals.sodium > effectiveTargets.sodium ? "text-[#D95338] font-black" : ""}>
+                      {totals.sodium}mg <span className="text-stone-400 font-normal">/ {effectiveTargets.sodium}mg</span>
                     </span>
                     <span className={`text-[10px] font-black ${sodiumInfo.isExceeded ? "text-[#D95338]" : "text-[#6E8B6B]"}`}>
                       ({sodiumInfo.pct}%)
@@ -789,13 +834,40 @@ export default function NutritionPage() {
                 <div className="w-full bg-stone-200/90 border border-stone-300/40 h-2.5 rounded-full overflow-hidden shadow-inner p-0.5">
                   <div 
                     className={`h-full rounded-full transition-all duration-500 ease-out ${
-                      totals.sodium > targets.sodium ? "bg-[#D95338] animate-pulse" : "bg-[#6E8B6B]"
+                      totals.sodium > effectiveTargets.sodium ? "bg-[#D95338] animate-pulse" : "bg-[#6E8B6B]"
                     }`}
                     style={{ width: `${Math.min(100, sodiumInfo.pct)}%` }}
                   />
                 </div>
               </div>
 
+            </div>
+
+            {/* Dynamic Conditional Badge Overlays (When Workout Mode is Active) */}
+            <div className="pt-2.5 border-t border-stone-200/70 flex flex-wrap items-center gap-2 min-h-[36px]">
+              {isWorkoutMode ? (
+                <>
+                  {totals.protein >= 35 && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#6E8B6B]/15 text-[#6E8B6B] border border-[#6E8B6B]/30 animate-in fade-in duration-150">
+                      🔥 High-Protein Intake
+                    </span>
+                  )}
+                  {totals.carbs >= 100 && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#D4A373]/15 text-[#D4A373] border border-[#D4A373]/30 animate-in fade-in duration-150">
+                      ⚡ Glycogen Replenishment
+                    </span>
+                  )}
+                  {totals.protein < 35 && totals.carbs < 100 && (
+                    <span className="text-[10px] font-medium text-stone-500 italic">
+                      Log food to unlock high-protein (≥35g) and glycogen (≥100g) recovery badges.
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-[10px] font-medium text-stone-400">
+                  Standard baseline mode active. Toggle [🏋️ Workout Mode] for elevated workout macro targets.
+                </span>
+              )}
             </div>
           </div>
 
@@ -841,7 +913,7 @@ export default function NutritionPage() {
                   <select
                     value={selectedRecipeId}
                     onChange={(e) => setSelectedRecipeId(e.target.value)}
-                    className="w-full px-3 py-2 bg-white hover:bg-stone-50 border border-stone-300 rounded-xl text-xs font-bold focus:outline-hidden focus:ring-2 focus:ring-[#D95338] text-zinc-900 cursor-pointer shadow-xs"
+                    className="w-full px-3 py-2 bg-white hover:bg-stone-50 border border-stone-300 rounded-xl text-xs font-bold focus:outline-hidden focus:ring-2 focus:ring-[#D95338] text-zinc-900 cursor-pointer shadow-xs min-h-[44px]"
                   >
                     <option value="">-- Choose from your recipe library --</option>
                     {recipes.map((rec) => (
@@ -850,6 +922,33 @@ export default function NutritionPage() {
                       </option>
                     ))}
                   </select>
+
+                  {/* Interactive Logging Scaler */}
+                  <div className="pt-2 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-black uppercase text-stone-600 flex items-center gap-1">
+                        <span>Quick Scale Servings</span>
+                      </label>
+                      <span className="px-2 py-0.5 text-[10px] font-black uppercase rounded-md bg-[#D95338]/10 text-[#D95338] border border-[#D95338]/20">
+                        Scale: {servingScale}x Servings
+                      </span>
+                    </div>
+                    <div className="flex items-center min-h-[44px]">
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="3"
+                        step="0.25"
+                        value={servingScale}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          setServingScale(val);
+                          setRecipeServings(val.toString());
+                        }}
+                        className="w-full accent-[#D95338] h-2.5 bg-stone-200 rounded-lg cursor-pointer"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-1">
@@ -860,13 +959,20 @@ export default function NutritionPage() {
                       step="0.25"
                       min="0.25"
                       value={recipeServings}
-                      onChange={(e) => setRecipeServings(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-bold text-center text-zinc-900 focus:outline-hidden focus:ring-2 focus:ring-[#D95338] shadow-xs"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setRecipeServings(val);
+                        const parsed = parseFloat(val);
+                        if (!isNaN(parsed) && parsed >= 0.5 && parsed <= 3) {
+                          setServingScale(parsed);
+                        }
+                      }}
+                      className="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-bold text-center text-zinc-900 focus:outline-hidden focus:ring-2 focus:ring-[#D95338] shadow-xs min-h-[44px]"
                     />
                     <button
                       disabled={!selectedRecipeId || createLogMutation.isPending || isEstimating !== null}
                       onClick={handleLogRecipe}
-                      className="px-4 py-2 bg-[#D95338] hover:bg-[#C24127] disabled:bg-stone-300 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all select-none cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shadow-sm"
+                      className="min-h-[44px] px-4 py-2 bg-[#D95338] hover:bg-[#C24127] disabled:bg-stone-300 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all select-none cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shadow-sm"
                     >
                       {createLogMutation.isPending || isEstimating ? (
                         <>

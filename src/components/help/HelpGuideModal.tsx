@@ -321,21 +321,17 @@ export interface HelpGuideButtonProps {
   className?: string;
 }
 
-/**
- * Clean, glassmorphic Help & Guides button with strict 44px touch target
- * Matching the butter-cream and terracotta theme.
- */
 export function HelpGuideButton({ onClick, className = "" }: HelpGuideButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`min-h-[44px] min-w-[44px] px-2.5 sm:px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 dark:bg-black/40 dark:hover:bg-black/60 border border-white/25 hover:border-amber-300/60 dark:border-white/15 dark:hover:border-amber-400/50 backdrop-blur-md shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 text-white cursor-pointer shrink-0 ${className}`}
+      className={`min-h-[44px] min-w-[44px] px-2.5 py-1 rounded-xl bg-black/40 hover:bg-black/60 border border-white/15 hover:border-amber-400/50 backdrop-blur-md shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1 text-white cursor-pointer shrink-0 ${className}`}
       title="Help & User Guides (Walkthrough, Manual & Home Screen Setup)"
       aria-label="Help & User Guides"
     >
-      <HelpCircle className="w-4 h-4 text-amber-300 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" />
-      <span className="text-xs font-extrabold uppercase tracking-wider hidden sm:inline text-stone-100">
+      <HelpCircle className="w-3.5 h-3.5 text-amber-300 drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]" />
+      <span className="text-[9.5px] font-bold uppercase tracking-wider text-stone-200">
         Guides
       </span>
     </button>

@@ -25,10 +25,10 @@ export function PWAInstallButton({ className = "" }: PWAInstallButtonProps) {
       <button
         type="button"
         onClick={install}
-        className={`min-h-[44px] px-3.5 py-2 rounded-full bg-[#D95338] hover:bg-[#b83e28] text-white text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95 ${className}`}
+        className={`min-h-[44px] px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-stone-200 hover:text-white text-[10.5px] font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 active:scale-95 ${className}`}
         aria-label="Install Curation Kitchen to home screen"
       >
-        <Download className="w-3.5 h-3.5 stroke-[2.5]" />
+        <Download className="w-3 h-3 text-amber-300 stroke-[2.2]" />
         <span>Install App</span>
       </button>
     );
@@ -40,10 +40,10 @@ export function PWAInstallButton({ className = "" }: PWAInstallButtonProps) {
         <button
           type="button"
           onClick={() => setShowIOSHint((prev) => !prev)}
-          className={`min-h-[44px] px-3.5 py-2 rounded-full bg-[#FAF6EE] dark:bg-zinc-800 border border-[#D95338]/30 text-[#D95338] text-xs font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1.5 ${className}`}
+          className={`min-h-[44px] px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-stone-200 hover:text-white text-[10.5px] font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 ${className}`}
           aria-label="Add to home screen on iOS"
         >
-          <Share className="w-3.5 h-3.5" />
+          <Share className="w-3 h-3 text-amber-300" />
           <span>Add to Phone</span>
         </button>
 

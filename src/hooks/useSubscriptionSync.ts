@@ -11,6 +11,8 @@ export interface SubscriptionData {
   user_id: string;
   subscription_tier: "free" | "premium" | string;
   is_premium: boolean;
+  hasMacroAddon?: boolean;
+  has_macro_addon?: boolean;
   stripe_customer_id?: string | null;
   stripe_subscription_id?: string | null;
   limits?: {
@@ -76,6 +78,7 @@ export function useSubscriptionSync(userId: string = "default_user") {
   });
 
   const isPremium = subscription?.is_premium === true || subscription?.subscription_tier === "premium";
+  const hasMacroAddon = subscription?.hasMacroAddon === true || subscription?.has_macro_addon === true;
 
   // Stop polling helper
   const stopPolling = useCallback(() => {
@@ -269,6 +272,7 @@ export function useSubscriptionSync(userId: string = "default_user") {
     subscription,
     isLoading,
     isPremium,
+    hasMacroAddon,
     isPollingActive,
     showUpgradeCelebration,
     dismissCelebration: () => setShowUpgradeCelebration(false),

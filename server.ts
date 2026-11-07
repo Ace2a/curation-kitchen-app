@@ -758,6 +758,8 @@ export interface UserSubscriptionProfile {
   email?: string;
   subscription_tier: "free" | "premium";
   is_premium: boolean;
+  hasMacroAddon?: boolean;
+  has_macro_addon?: boolean;
   stripe_customer_id?: string | null;
   stripe_subscription_id?: string | null;
   created_at: string;
@@ -793,6 +795,8 @@ function findOrCreateUserSubscription(dbData: any, userId?: string, email?: stri
       email: email || undefined,
       subscription_tier: "free",
       is_premium: false,
+      hasMacroAddon: false,
+      has_macro_addon: false,
       stripe_customer_id: null,
       stripe_subscription_id: null,
       created_at: new Date().toISOString(),
@@ -811,14 +815,17 @@ app.post("/api/payments/create-checkout-session", async (req, res) => {
     user_id, 
     email, 
     priceId, 
+    addon,
+    tier,
     success_url, 
     cancel_url 
   } = req.body || {};
 
   const targetUserId = userId || user_id || "default_user";
+  const isMacroAddon = addon === "macro" || tier === "macro";
   const origin = req.headers.origin || `${req.protocol}://${req.get("host")}` || "http://localhost:3000";
 
-  const defaultSuccessUrl = `${origin}/?session_id={CHECKOUT_SESSION_ID}&payment_status=success`;
+  const defaultSuccessUrl = `${origin}/?session_id={CHECKOUT_SESSION_ID}&payment_status=success&tier=${isMacroAddon ? "macro" : "premium"}`;
   const defaultCancelUrl = `${origin}/?payment_status=cancelled`;
 
   const finalSuccessUrl = success_url || defaultSuccessUrl;
@@ -828,25 +835,34 @@ app.post("/api/payments/create-checkout-session", async (req, res) => {
     if (!stripe) {
       console.warn("⚠️ STRIPE_SECRET_KEY not configured. Generating development simulated checkout session.");
       const simulatedSessionId = "cs_simulated_" + Math.random().toString(36).substring(2, 12);
-      const simulatedUrl = `${origin}/pantry?session_id=${simulatedSessionId}&payment_status=simulated_success&tier=premium`;
+      const simulatedUrl = `${origin}/?session_id=${simulatedSessionId}&payment_status=simulated_success&tier=${isMacroAddon ? "macro" : "premium"}`;
       
       const dbData = readDb();
       const user = findOrCreateUserSubscription(dbData, targetUserId, email);
+      if (isMacroAddon) {
+        user.hasMacroAddon = true;
+        user.has_macro_addon = true;
+      } else {
+        user.subscription_tier = "premium";
+        user.is_premium = true;
+      }
+      user.updated_at = new Date().toISOString();
+      writeDb(dbData);
       
       return res.json({
         id: simulatedSessionId,
         url: simulatedUrl,
         mode: "subscription",
         status: "simulated",
-        tier: STRIPE_PAYMENT_CONFIG.PREMIUM_MONTHLY_TIER_ID,
-        amount_usd: "4.99",
+        tier: isMacroAddon ? "macro" : STRIPE_PAYMENT_CONFIG.PREMIUM_MONTHLY_TIER_ID,
+        amount_usd: isMacroAddon ? "5.00" : "4.99",
         message: "STRIPE_SECRET_KEY not set in environment. Returned development checkout session.",
         user_id: user.id,
       });
     }
 
-    // Use environment-configured price ID or dynamic line item configuration for $4.99/mo
-    const configuredPriceId = priceId || process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID;
+    // Use environment-configured price ID or dynamic line item configuration
+    const configuredPriceId = priceId || (isMacroAddon ? process.env.STRIPE_MACRO_MONTHLY_PRICE_ID : process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID);
 
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = configuredPriceId
       ? [{ price: configuredPriceId, quantity: 1 }]
@@ -855,13 +871,15 @@ app.post("/api/payments/create-checkout-session", async (req, res) => {
             price_data: {
               currency: STRIPE_PAYMENT_CONFIG.CURRENCY,
               product_data: {
-                name: STRIPE_PAYMENT_CONFIG.PRODUCT_NAME,
-                description: STRIPE_PAYMENT_CONFIG.PRODUCT_DESCRIPTION,
+                name: isMacroAddon ? "Curation Kitchen - Macro-Target Fitness Workspace Add-On" : STRIPE_PAYMENT_CONFIG.PRODUCT_NAME,
+                description: isMacroAddon 
+                  ? "Workout training mode, 150g+ protein benchmarking, and dynamic macro tracking." 
+                  : STRIPE_PAYMENT_CONFIG.PRODUCT_DESCRIPTION,
                 metadata: {
-                  tier: STRIPE_PAYMENT_CONFIG.PREMIUM_MONTHLY_TIER_ID,
+                  tier: isMacroAddon ? "macro" : STRIPE_PAYMENT_CONFIG.PREMIUM_MONTHLY_TIER_ID,
                 },
               },
-              unit_amount: STRIPE_PAYMENT_CONFIG.PREMIUM_MONTHLY_AMOUNT_CENTS,
+              unit_amount: isMacroAddon ? 500 : STRIPE_PAYMENT_CONFIG.PREMIUM_MONTHLY_AMOUNT_CENTS,
               recurring: {
                 interval: "month",
               },
@@ -877,7 +895,8 @@ app.post("/api/payments/create-checkout-session", async (req, res) => {
       client_reference_id: String(targetUserId),
       metadata: {
         userId: String(targetUserId),
-        tier: STRIPE_PAYMENT_CONFIG.PREMIUM_MONTHLY_TIER_ID,
+        tier: isMacroAddon ? "macro" : STRIPE_PAYMENT_CONFIG.PREMIUM_MONTHLY_TIER_ID,
+        addon: isMacroAddon ? "macro" : "pro",
       },
       success_url: finalSuccessUrl,
       cancel_url: finalCancelUrl,
@@ -1064,11 +1083,14 @@ app.get("/api/user/subscription", (req, res) => {
   const currentRecipeCount = Array.isArray(dbData.recipes) ? dbData.recipes.length : 0;
   const currentPantryCount = Array.isArray(dbData.pantry) ? dbData.pantry.length : 0;
   const isPremium = user.subscription_tier === "premium" || user.is_premium === true;
+  const hasMacroAddon = user.hasMacroAddon === true || user.has_macro_addon === true;
 
   res.json({
     user_id: user.id,
     subscription_tier: user.subscription_tier,
     is_premium: isPremium,
+    hasMacroAddon: hasMacroAddon,
+    has_macro_addon: hasMacroAddon,
     stripe_customer_id: user.stripe_customer_id || null,
     stripe_subscription_id: user.stripe_subscription_id || null,
     limits: {
@@ -1089,6 +1111,24 @@ app.get("/api/user/subscription", (req, res) => {
         unlimited: isPremium,
       },
     },
+  });
+});
+
+// POST /api/user/subscription/addon - Toggle or set hasMacroAddon status
+app.post("/api/user/subscription/addon", (req, res) => {
+  const dbData = readDb();
+  const userId = (req.body?.userId as string) || (req.body?.user_id as string) || "default_user";
+  const user = findOrCreateUserSubscription(dbData, userId);
+  const active = req.body?.active !== undefined ? Boolean(req.body.active) : true;
+  user.hasMacroAddon = active;
+  user.has_macro_addon = active;
+  user.updated_at = new Date().toISOString();
+  writeDb(dbData);
+  res.json({
+    success: true,
+    user_id: user.id,
+    hasMacroAddon: user.hasMacroAddon,
+    is_premium: user.is_premium,
   });
 });
 
